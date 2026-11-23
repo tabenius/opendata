@@ -20,6 +20,8 @@ export interface Envelope {
   subject: string;
   text: string;
   html?: string;
+  /** Extra headers, e.g. List-Unsubscribe. */
+  headers?: Record<string, string>;
   /** Attachments are separate objects, referenced by key and digest. */
   attachments?: { object_key: string; sha256: string; filename: string; content_type: string }[];
 }

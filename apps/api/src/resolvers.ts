@@ -16,9 +16,18 @@ function userError(error: unknown): never {
 
 const attribution = (...ids: (keyof typeof SOURCES)[]) => ids.map((id) => SOURCES[id].attribution);
 
+/** Run a resolver; RangeError/TypeError from the core are the caller's mistake, not a 500. */
+async function guarded<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (e) {
+    userError(e);
+  }
+}
+
 export const resolvers = {
   Query: {
-    organisation: (_: unknown, a: { orgnr: string }, c: Context) => c.queries.organisation(a.orgnr),
+    organisation: (_: unknown, a: { orgnr: string }, c: Context) => guarded(() => c.queries.organisation(a.orgnr)),
     organisations: async (_: unknown, a: { filter?: Record<string, string>; first?: number; after?: string }, c: Context) => {
       try {
         return await c.queries.searchOrganisations(a.filter ?? {}, a.first, a.after);
@@ -35,11 +44,10 @@ export const resolvers = {
       }
     },
     geocode: async (_: unknown, a: { address: string; limit?: number }, c: Context) => {
-      if (a.address.length > 200) throw createGraphQLError("address is too long", { extensions: { code: "BAD_USER_INPUT" } });
-      return (await c.queries.geocode(a.address, a.limit)).map((r) => ({ ...r, attribution: SOURCES["lantmateriet-adress"].attribution }));
+      return guarded(async () => (await c.queries.geocode(a.address, a.limit)).map((r) => ({ ...r, attribution: SOURCES["lantmateriet-adress"].attribution })));
     },
     area: async (_: unknown, a: { deso?: string; point?: { lat: number; lon: number } }, c: Context) => {
-      const area = await c.queries.area({ deso: a.deso ?? undefined, point: a.point ?? undefined });
+      const area = await guarded(() => c.queries.area({ deso: a.deso ?? undefined, point: a.point ?? undefined }));
       return area && { ...area, attribution: attribution("scb-deso", "scb-px") };
     },
     sources: (_: unknown, __: unknown, c: Context) => c.queries.sourceStatus(),
@@ -52,7 +60,7 @@ export const resolvers = {
   },
   Organisation: {
     workplaces: async (o: Organisation, a: { first?: number; after?: string }, c: Context) => ({
-      ...(await c.queries.workplacesOf(o.orgnr, a.first, a.after)),
+      ...(await guarded(() => c.queries.workplacesOf(o.orgnr, a.first, a.after))),
       attribution: attribution("scb-fr", "lantmateriet-adress"),
     }),
     annualReports: async (o: Organisation, _: unknown, c: Context) =>

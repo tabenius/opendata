@@ -37,7 +37,7 @@ export async function deliverOutbox(log: MessageLog, mailer: Mailer, kv: KvStore
         text: envelope.text,
         html: envelope.html,
         idempotencyKey: envelope.idempotency,
-        headers: { "X-Opendata-Message": ref.sha12 },
+        headers: { ...envelope.headers, "X-Opendata-Message": ref.sha12 },
       });
       await log.markDelivered(ref, { provider: receipt.provider, provider_message_id: receipt.providerMessageId, delivered_at: receipt.acceptedAt });
       await kv.delete(attemptsKey);

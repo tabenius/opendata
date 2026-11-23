@@ -18,6 +18,7 @@
   "devDependencies": {
     "@opendata/adapters-sql": "workspace:*",
     "@opendata/adapters-object": "workspace:*",
-    "@opendata/adapters-kv": "workspace:*"
+    "@opendata/adapters-kv": "workspace:*",
+    "@opendata/mail": "workspace:*"
   }
 }

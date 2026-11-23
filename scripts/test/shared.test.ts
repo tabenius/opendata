@@ -9,3 +9,10 @@ describe("files shared with Rust", () => {
     expect(readFileSync(new URL("../../contracts/vectors/core.json", import.meta.url), "utf8")).toBe(vectors);
   });
 });
+
+describe("PWA security headers", () => {
+  it("apps/pwa/public/_headers matches the API policy (run `npx tsx scripts/gen-headers.ts`)", async () => {
+    const { headersFile } = await import("../gen-headers");
+    expect(readFileSync(new URL("../../apps/pwa/public/_headers", import.meta.url), "utf8")).toBe(headersFile());
+  });
+});

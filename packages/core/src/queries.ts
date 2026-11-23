@@ -162,6 +162,27 @@ function clampFirst(first: number | undefined, fallback = 20): number {
   return Math.min(n, MAX_PAGE);
 }
 
+/** Input rules shared by GraphQL, REST and MCP. RangeError = the caller's mistake. */
+export const INPUT = {
+  sni: /^\d{1,5}$/,
+  kommun: /^\d{4}$/,
+  deso: /^\d{4}[A-C]\d{4}$/,
+  legalFormCode: /^[A-ZÅÄÖ]{1,5}$/,
+  status: /^(active|inactive|deregistered|unknown)$/,
+} as const;
+
+function check(name: keyof typeof INPUT, value: string | undefined | null): void {
+  if (value !== undefined && value !== null && !INPUT[name].test(value)) throw new RangeError(`invalid ${name}`);
+}
+
+function checkText(name: string, value: string | undefined, max: number): void {
+  if (value !== undefined && (value.length > max || /[\u0000-\u001f]/.test(value))) throw new RangeError(`${name} must be at most ${max} printable characters`);
+}
+
+function checkPoint(p: LatLon | undefined): void {
+  if (p && !(Number.isFinite(p.lat) && Number.isFinite(p.lon))) throw new RangeError("point must have finite lat and lon");
+}
+
 /** FTS5 query from free text: quoted prefix terms, AND-ed. */
 export function ftsQuery(text: string): string | null {
   const terms = normaliseText(text)
@@ -210,6 +231,12 @@ export class Queries {
   }
 
   async searchOrganisations(filter: OrganisationFilter, first?: number, after?: string | null): Promise<Page<Organisation>> {
+    checkText("query", filter.query, 100);
+    checkText("town", filter.town, 60);
+    check("sni", filter.sni);
+    check("kommun", filter.kommun);
+    check("legalFormCode", filter.legalFormCode);
+    check("status", filter.status);
     const limit = clampFirst(first);
     const where: string[] = [];
     const params: SqlValue[] = [];
@@ -242,6 +269,7 @@ export class Queries {
       params.push(filter.kommun);
     }
     const cursor = decodeCursor<{ o: string }>(after);
+    if (cursor && (typeof cursor.o !== "string" || !/^\d{10}$/.test(cursor.o))) throw new RangeError("invalid cursor");
     if (cursor) {
       where.push("o.orgnr > ?");
       params.push(cursor.o);
@@ -258,6 +286,7 @@ export class Queries {
     const limit = clampFirst(first);
     const id = parseOrgnr(orgnr);
     const cursor = decodeCursor<{ c: number }>(after);
+    if (cursor && !Number.isSafeInteger(cursor.c)) throw new RangeError("invalid cursor");
     const rows = await this.sql.query<WpRow>(
       `SELECT w.*, o.name AS organisation_name FROM workplace w LEFT JOIN organisation o ON o.orgnr = w.orgnr
        WHERE w.orgnr = ? AND w.cfar > ? ORDER BY w.cfar LIMIT ?`,
@@ -268,6 +297,7 @@ export class Queries {
   }
 
   async geocode(text: string, limit = 5): Promise<GeocodeResult[]> {
+    checkText("address", text, 200);
     const n = Math.min(Math.max(1, limit), 20);
     const toResult = (r: Record<string, unknown>): GeocodeResult => ({
       addressId: String(r.address_id),
@@ -308,6 +338,10 @@ export class Queries {
   }
 
   async workplacesNear(options: NearOptions): Promise<Page<Workplace> & { center: LatLon | null }> {
+    checkText("address", options.address, 200);
+    checkPoint(options.point);
+    if ((options.sni?.length ?? 0) > 10) throw new RangeError("at most 10 SNI prefixes");
+    for (const code of options.sni ?? []) check("sni", code);
     const limit = clampFirst(options.first, 50);
     const radius = options.radiusM ?? 500;
     if (!(radius > 0 && radius <= MAX_RADIUS_M)) throw new RangeError(`radiusM must be 1..${MAX_RADIUS_M}`);
@@ -337,6 +371,7 @@ export class Queries {
       .filter((x) => x.d <= radius)
       .sort((a, b) => a.d - b.d || Number(a.r.cfar) - Number(b.r.cfar));
     const offset = decodeCursor<{ i: number }>(options.after)?.i ?? 0;
+    if (!Number.isSafeInteger(offset) || offset < 0) throw new RangeError("invalid cursor");
     const items = within.slice(offset, offset + limit).map((x) => toWorkplace(x.r, x.d));
     return {
       items,
@@ -347,6 +382,8 @@ export class Queries {
   }
 
   async area(input: { deso?: string; point?: LatLon }): Promise<Area | null> {
+    check("deso", input.deso);
+    checkPoint(input.point);
     let row: Record<string, unknown> | null = null;
     if (input.deso) {
       row = await this.sql.first("SELECT * FROM area WHERE deso = ?", [input.deso]);

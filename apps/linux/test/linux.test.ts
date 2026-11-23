@@ -55,3 +55,13 @@ describe("linux configuration", () => {
     expect(parseArgs(["ingest", "scb", "--kommun", "1480", "--dry", "--x=y"])).toEqual({ positional: ["ingest", "scb"], flags: { kommun: "1480", dry: true, x: "y" } });
   });
 });
+
+describe("linux client identity", () => {
+  it("ignores X-Real-IP unless a loopback proxy is trusted", async () => {
+    const { linuxClientId } = await import("../src/client");
+    const ctx = (peer: string, real?: string) => ({ env: { incoming: { socket: { remoteAddress: peer } } }, req: { header: (n: string) => (n === "x-real-ip" ? real : undefined) } }) as never;
+    expect(linuxClientId(false)(ctx("203.0.113.9", "1.2.3.4"))).toBe("203.0.113.9");
+    expect(linuxClientId(true)(ctx("203.0.113.9", "1.2.3.4"))).toBe("203.0.113.9");
+    expect(linuxClientId(true)(ctx("127.0.0.1", "1.2.3.4"))).toBe("1.2.3.4");
+  });
+});

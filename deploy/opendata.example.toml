@@ -6,6 +6,8 @@ public_url = "https://opendata.example.se"
 listen = "127.0.0.1:8787"
 data_dir = "/var/lib/opendata"
 # pwa_dir = "/opt/opendata/apps/pwa/dist"
+# Behind a reverse proxy on this host that sets X-Real-IP:
+# trust_proxy = true
 
 [objects]
 type = "fs"            # "fs" (an rbq object store) or "s3" (MinIO, Garage, R2's S3 API, AWS)

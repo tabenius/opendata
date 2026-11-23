@@ -4,7 +4,7 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import path from "node:path";
 import type { Hono } from "hono";
 import type { Repository } from "@opendata/core";
-import type { Services } from "@opendata/api";
+import { MAX_MCP_BODY_BYTES, boundedRequest, type Services } from "@opendata/api";
 import { latestSnapshot, publishDatabase, syncLatest, LAYER } from "@opendata/datasets";
 import { fsckLayer, generateToken, listSnapshots } from "@opendata/rbq";
 import { BolagsverketClient, PxClient, ScbFrClient, ingestBolagsverket, ingestPxTable } from "@opendata/sources";
@@ -15,7 +15,10 @@ import { readSecretFile, type Config } from "./config";
 
 export function extendLinux(app: Hono, services: Services, config: Config): void {
   const token = config.mcp.token_file ? readSecretFile(config.mcp.token_file) : undefined;
-  app.all("/mcp", (c) => handleMcp(c.req.raw, { sql: services.sql, objects: services.objects, token }));
+  app.all("/mcp", async (c) => {
+    const request = await boundedRequest(c.req.raw, MAX_MCP_BODY_BYTES);
+    return request instanceof Response ? request : handleMcp(request, { sql: services.sql, objects: services.objects, token });
+  });
   if (existsSync(path.join(config.pwa_dir, "index.html"))) {
     const root = path.relative(process.cwd(), config.pwa_dir) || ".";
     app.use("/*", serveStatic({ root }));

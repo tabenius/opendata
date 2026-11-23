@@ -8,21 +8,37 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
+/// Largest input file (or unpacked zip entry) read into memory. National bulk
+/// files are a few GiB; anything larger is refused rather than exhausting memory.
+pub const MAX_INPUT_BYTES: u64 = 16 * 1024 * 1024 * 1024;
+
+fn read_capped(reader: impl Read, what: &str, max: u64) -> Result<Vec<u8>> {
+    let mut out = Vec::new();
+    reader.take(max + 1).read_to_end(&mut out)?;
+    if out.len() as u64 > max {
+        bail!("{what} is larger than {max} bytes");
+    }
+    Ok(out)
+}
+
 /// Bytes of a file, or of the first non-directory entry if it is a .zip.
 pub fn read_maybe_zip(path: &Path) -> Result<Vec<u8>> {
-    let mut file = File::open(path).with_context(|| format!("open {}", path.display()))?;
-    let mut bytes = Vec::new();
-    file.read_to_end(&mut bytes)?;
+    read_maybe_zip_capped(path, MAX_INPUT_BYTES)
+}
+
+pub fn read_maybe_zip_capped(path: &Path, max: u64) -> Result<Vec<u8>> {
+    let file = File::open(path).with_context(|| format!("open {}", path.display()))?;
+    let bytes = read_capped(file, &path.display().to_string(), max)?;
     if bytes.starts_with(b"PK\x03\x04") {
         let mut archive = zip::ZipArchive::new(std::io::Cursor::new(bytes))?;
         for i in 0..archive.len() {
-            let mut entry = archive.by_index(i)?;
+            let entry = archive.by_index(i)?;
             if entry.is_dir() {
                 continue;
             }
-            let mut out = Vec::new();
-            entry.read_to_end(&mut out)?;
-            return Ok(out);
+            // The declared size can lie; read_capped bounds what is actually inflated.
+            let name = entry.name().to_string();
+            return read_capped(entry, &format!("{} entry {name}", path.display()), max);
         }
         bail!("{} contains no files", path.display());
     }
@@ -296,6 +312,19 @@ pub fn scb_api_jsonl(legal_units: Option<&[u8]>, workplaces: &[u8], source_date:
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn caps_inflated_zip_entries() {
+        use std::io::Write;
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("bomb.zip");
+        let mut zip = zip::ZipWriter::new(std::fs::File::create(&path).unwrap());
+        zip.start_file("big.csv", zip::write::SimpleFileOptions::default()).unwrap();
+        zip.write_all(&vec![b'a'; 1_000_000]).unwrap();
+        zip.finish().unwrap();
+        assert!(read_maybe_zip_capped(&path, 10_000).unwrap_err().to_string().contains("larger than"));
+        assert_eq!(read_maybe_zip_capped(&path, 2_000_000).unwrap().len(), 1_000_000);
+    }
 
     #[test]
     fn parses_postal_addresses() {

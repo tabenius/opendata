@@ -87,3 +87,18 @@ describe("opendata snapshots over rbq", () => {
     await expect(syncLatest(await target(), objects, "local")).rejects.toMatchObject({ kind: "Corrupt" });
   });
 });
+
+describe("snapshot row counts", () => {
+  it("refuses a table whose row count disagrees with meta.json", async () => {
+    const { sql } = await source();
+    const objects = new MemoryObjectStore();
+    const { exportTables } = await import("@opendata/core");
+    const { publishSnapshot } = await import("@opendata/rbq");
+    const files = await exportTables(sql);
+    const workplaces = files.find((f) => f.path === "tables/workplace.ndjson")!;
+    const lines = new TextDecoder().decode(workplaces.data).trimEnd().split("\n");
+    workplaces.data = new TextEncoder().encode(lines.slice(1).join("\n") + "\n"); // drop a row, keep meta.json
+    await publishSnapshot(objects, { layer: "opendata", label: "cut", files, owner: {} });
+    await expect(syncLatest(await target(), objects, "cut")).rejects.toMatchObject({ kind: "Corrupt" });
+  });
+});

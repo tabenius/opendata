@@ -11,7 +11,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "check:contract": "cd contracts/rbq && sha256sum --check SHA256SUMS",
-    "gen": "tsx scripts/gen-shared.ts"
+    "gen": "tsx scripts/gen-shared.ts && tsx scripts/gen-headers.ts"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

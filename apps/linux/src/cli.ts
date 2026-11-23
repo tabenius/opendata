@@ -23,6 +23,7 @@ import { Repository, fixtureDataset } from "@opendata/core";
 import { ScbFrClient, ingestScbKommun } from "@opendata/sources";
 import { explain, loadConfig, readSecretFile } from "./config";
 import { compose } from "./compose";
+import { linuxClientId } from "./client";
 import { extendLinux, runCommand } from "./commands";
 
 export function parseArgs(argv: string[]) {
@@ -68,7 +69,7 @@ async function main(argv: string[]) {
         console.log(JSON.stringify({ ok: true, database: config.sql.file }));
         return;
       case "serve": {
-        const app = createApi(services, { extend: (a) => extendLinux(a, services, config) });
+        const app = createApi(services, { clientIdOf: linuxClientId(config.trust_proxy), extend: (a) => extendLinux(a, services, config) });
         const [host, port] = config.listen.split(":");
         serve({ fetch: app.fetch, hostname: host, port: Number(port) }, (info) => console.error(`opendata listening on http://${info.address}:${info.port}`));
         await new Promise(() => undefined);

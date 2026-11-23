@@ -86,6 +86,8 @@ interface ManifestLike {
 export interface ImportState {
   snapshotId: string;
   table: number;
+  /** Rows seen in the current table (imported + skipped), checked against meta.json. */
+  tableRows?: number;
   chunk: number;
   /** Bytes after the last newline of the previous chunk, base64. */
   carry: string;
@@ -218,6 +220,7 @@ export async function importSnapshot(sql: SqlStore, objects: ObjectStore, manife
         for (const line of new TextDecoder("utf-8", { fatal: true }).decode(complete).split("\n")) {
           if (!line.trim()) continue;
           const row = JSON.parse(line) as Record<string, unknown>;
+          state.tableRows = (state.tableRows ?? 0) + 1;
           if (table.identity && classify({ id: String(row[table.identity] ?? "") }) !== "legal") {
             state.skipped++;
             continue;
@@ -231,7 +234,10 @@ export async function importSnapshot(sql: SqlStore, objects: ObjectStore, manife
         state = { ...state, chunk: state.chunk + 1, carry: toB64(carry) };
         await setMeta(sql, "import_state", JSON.stringify(state), now());
       }
-      state = { ...state, table: state.table + 1, chunk: 0, carry: "" };
+      const expected = meta.rows[table.name];
+      if (expected !== undefined && (state.tableRows ?? 0) !== expected)
+        throw StorageError.corrupt(`tables/${table.name}.ndjson has ${state.tableRows ?? 0} rows, meta.json says ${expected}`);
+      state = { ...state, table: state.table + 1, tableRows: 0, chunk: 0, carry: "" };
       await setMeta(sql, "import_state", JSON.stringify(state), now());
     }
 

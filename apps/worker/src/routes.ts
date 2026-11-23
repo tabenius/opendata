@@ -1,6 +1,6 @@
 /** Worker-only routes and cron work. */
 import type { Hono } from "hono";
-import type { Services } from "@opendata/api";
+import { MAX_MCP_BODY_BYTES, boundedRequest, type Services } from "@opendata/api";
 import { timingSafeEqual } from "@opendata/rbq";
 import { syncLatest } from "@opendata/datasets";
 import { handleMcp } from "@opendata/mcp";
@@ -19,7 +19,10 @@ function admin(env: Env, header: string | undefined): boolean {
 }
 
 export function extendWorker(app: Hono, services: Services, env: Env, _ctx: { waitUntil(p: Promise<unknown>): void }) {
-  app.all("/mcp", (c) => handleMcp(c.req.raw, { sql: services.sql, objects: services.objects, token: env.MCP_TOKEN }));
+  app.all("/mcp", async (c) => {
+    const request = await boundedRequest(c.req.raw, MAX_MCP_BODY_BYTES);
+    return request instanceof Response ? request : handleMcp(request, { sql: services.sql, objects: services.objects, token: env.MCP_TOKEN });
+  });
   app.post("/admin/mail", async (c) => {
     if (!admin(env, c.req.header("authorization"))) return c.json({ error: "unauthorized" }, 401);
     return c.json(await mailTick(services));

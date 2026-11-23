@@ -11,6 +11,8 @@ export interface WatchConfig {
   publicUrl: string;
   from: { email: string; name?: string };
   maxWatchesPerEmail?: number;
+  /** Unconfirmed watches are deleted after this many hours (default 48). */
+  confirmWithinHours?: number;
 }
 
 export interface WatchInput {
@@ -69,6 +71,7 @@ export class Watches {
     if (Number(count?.c ?? 0) >= (this.config.maxWatchesPerEmail ?? 5)) return accepted;
     const id = crypto.randomUUID();
     const confirm = token();
+    await this.expireUnconfirmed();
     await this.sql.exec(
       "INSERT INTO watch (id, email, kommun, deso, sni_prefix, confirm_token, confirmed, created_at, unsubscribe_token) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)",
       [id, email, input.kommun ?? null, input.deso ?? null, input.sniPrefix ?? null, confirm, new Date().toISOString(), token()],
@@ -114,8 +117,15 @@ export class Watches {
     return true;
   }
 
+  /** Delete watches nobody confirmed in time (they also free the per-address quota). */
+  async expireUnconfirmed(now = new Date()): Promise<number> {
+    const cutoff = new Date(now.getTime() - (this.config.confirmWithinHours ?? 48) * 3600_000).toISOString();
+    return (await this.sql.exec("DELETE FROM watch WHERE confirmed = 0 AND created_at < ?", [cutoff])).changes;
+  }
+
   /** Queue one alert per confirmed watch with new matching workplaces. */
-  async check(limitPerWatch = 50): Promise<{ watches: number; alerts: number }> {
+  async check(limitPerWatch = 50): Promise<{ watches: number; alerts: number; expired: number }> {
+    const expired = await this.expireUnconfirmed();
     const watches = await this.sql.query<{ id: string; email: string; kommun: string | null; deso: string | null; sni_prefix: string | null; unsubscribe_token: string }>(
       "SELECT id, email, kommun, deso, sni_prefix, unsubscribe_token FROM watch WHERE confirmed = 1",
     );
@@ -136,12 +146,14 @@ export class Watches {
         from: this.config.from,
         to: [{ email: watch.email }],
         subject: `${fresh.length} nya arbetsställen / new workplaces`,
+        // RFC 2369 / RFC 8058 one-click unsubscribe for mail clients.
+        headers: { "List-Unsubscribe": `<${unsubscribe}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" },
         text: `${lines.join("\n")}\n\nKälla: SCB, allmänna företagsregistret; Lantmäteriet.\nAvsluta bevakningen / unsubscribe: ${unsubscribe}`,
       });
       await this.sql.batch(fresh.map((w) => ({ sql: "INSERT OR IGNORE INTO watch_seen (watch_id, cfar) VALUES (?, ?)", params: [watch.id, w.cfar] })));
       await this.sql.exec("UPDATE watch SET last_checked_at = ? WHERE id = ?", [new Date().toISOString(), watch.id]);
       alerts++;
     }
-    return { watches: watches.length, alerts };
+    return { watches: watches.length, alerts, expired };
   }
 }

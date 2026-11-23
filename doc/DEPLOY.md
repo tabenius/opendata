@@ -64,8 +64,10 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now opendata.service opendata-jobs.timer
 ```
 
-Put a TLS reverse proxy (Caddy, nginx) in front. It must set
-`X-Real-IP` for per-client rate limiting.
+Put a TLS reverse proxy (Caddy, nginx) on the same host in front, have it
+set `X-Real-IP`, and set `trust_proxy = true`. Forwarded headers are only
+believed from a loopback peer; without `trust_proxy` the socket address is
+used, so clients cannot choose their own rate-limit identity.
 
 `opendata config explain --config /etc/opendata/config.toml` prints the
 effective configuration with secrets redacted.
