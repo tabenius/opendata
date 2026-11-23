@@ -165,4 +165,18 @@ CREATE TABLE watch_seen (
 );
 `,
   },
+  {
+    id: "0002_snapshots",
+    sql: `
+ALTER TABLE organisation ADD COLUMN snapshot TEXT;
+ALTER TABLE workplace ADD COLUMN snapshot TEXT;
+ALTER TABLE address ADD COLUMN snapshot TEXT;
+ALTER TABLE area ADD COLUMN snapshot TEXT;
+ALTER TABLE area ADD COLUMN geometry TEXT;
+ALTER TABLE area_stat ADD COLUMN snapshot TEXT;
+ALTER TABLE annual_report ADD COLUMN snapshot TEXT;
+ALTER TABLE sni ADD COLUMN snapshot TEXT;
+CREATE INDEX area_bbox ON area(min_lat, max_lat);
+`,
+  },
 ];

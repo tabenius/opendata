@@ -198,12 +198,12 @@ ON CONFLICT(address_id) DO UPDATE SET street = excluded.street, number = exclude
 
   async upsertAreas(records: AreaRecord[]): Promise<WriteReport> {
     const statements = records.map<Statement>((a) => ({
-      sql: `INSERT INTO area (deso, regso, kommun, name, lat, lon, min_lat, min_lon, max_lat, max_lon, geometry_key)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      sql: `INSERT INTO area (deso, regso, kommun, name, lat, lon, min_lat, min_lon, max_lat, max_lon, geometry_key, geometry)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(deso) DO UPDATE SET regso = excluded.regso, kommun = excluded.kommun, name = excluded.name, lat = excluded.lat,
   lon = excluded.lon, min_lat = excluded.min_lat, min_lon = excluded.min_lon, max_lat = excluded.max_lat, max_lon = excluded.max_lon,
-  geometry_key = excluded.geometry_key`,
-      params: [a.deso, nn(a.regso), nn(a.kommun), nn(a.name), nn(a.lat), nn(a.lon), a.bbox?.[0] ?? null, a.bbox?.[1] ?? null, a.bbox?.[2] ?? null, a.bbox?.[3] ?? null, nn(a.geometryKey)],
+  geometry_key = excluded.geometry_key, geometry = excluded.geometry`,
+      params: [a.deso, nn(a.regso), nn(a.kommun), nn(a.name), nn(a.lat), nn(a.lon), a.bbox?.[0] ?? null, a.bbox?.[1] ?? null, a.bbox?.[2] ?? null, a.bbox?.[3] ?? null, nn(a.geometryKey), a.geometry ? JSON.stringify(a.geometry) : null],
     }));
     await runBatches(this.sql, statements);
     return { ...empty(), written: records.length };

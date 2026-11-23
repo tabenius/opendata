@@ -12,6 +12,11 @@ export function withLuhn(nine: string): string {
   throw new Error("unreachable");
 }
 
+const box = (minLat: number, minLon: number, maxLat: number, maxLon: number) => ({
+  type: "Polygon",
+  coordinates: [[[minLon, minLat], [maxLon, minLat], [maxLon, maxLat], [minLon, maxLat], [minLon, minLat]]],
+});
+
 export const FIXTURE_DATE = "2026-11-20";
 export const FIXTURE_CENTER = { lat: 57.7072, lon: 11.9668 };
 
@@ -105,8 +110,8 @@ export function fixtureDataset(): FixtureDataset {
     jurform: "10",
   });
   const areas: AreaRecord[] = [
-    { deso: "1480C1010", regso: "1480R101", kommun: "1480", name: "Centrum västra", lat: FIXTURE_CENTER.lat, lon: FIXTURE_CENTER.lon - 0.004, bbox: [57.69, 11.94, 57.72, 11.967] },
-    { deso: "1480C1020", regso: "1480R101", kommun: "1480", name: "Centrum östra", lat: FIXTURE_CENTER.lat, lon: FIXTURE_CENTER.lon + 0.004, bbox: [57.69, 11.967, 57.72, 11.99] },
+        { deso: "1480C1010", regso: "1480R101", kommun: "1480", name: "Centrum västra", lat: FIXTURE_CENTER.lat, lon: FIXTURE_CENTER.lon - 0.004, bbox: [57.69, 11.94, 57.72, 11.967], geometry: box(57.69, 11.94, 57.72, 11.967) },
+    { deso: "1480C1020", regso: "1480R101", kommun: "1480", name: "Centrum östra", lat: FIXTURE_CENTER.lat, lon: FIXTURE_CENTER.lon + 0.004, bbox: [57.69, 11.967, 57.72, 11.99], geometry: box(57.69, 11.967, 57.72, 11.99) },
   ];
   const stats: AreaStatRecord[] = [
     { deso: "1480C1010", tableId: "fixture-pop", variable: "population", label: "Folkmängd", period: "2025", value: 1832 },

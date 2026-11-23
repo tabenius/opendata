@@ -207,6 +207,25 @@ importers:
         specifier: workspace:*
         version: link:../adapters-sql
 
+  packages/datasets:
+    dependencies:
+      '@opendata/core':
+        specifier: workspace:*
+        version: link:../core
+      '@opendata/ports':
+        specifier: workspace:*
+        version: link:../ports
+      '@opendata/rbq':
+        specifier: workspace:*
+        version: link:../rbq
+    devDependencies:
+      '@opendata/adapters-object':
+        specifier: workspace:*
+        version: link:../adapters-object
+      '@opendata/adapters-sql':
+        specifier: workspace:*
+        version: link:../adapters-sql
+
   packages/ports: {}
 
   packages/rbq:

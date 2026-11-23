@@ -351,16 +351,16 @@ export class Queries {
         [lat, lat, lon, lon],
       );
       for (const candidate of candidates) {
-        const key = s(candidate.geometry_key);
-        if (key && this.objects) {
-          const geometry = JSON.parse(new TextDecoder().decode(await this.objects.get(parseObjectKey(key)))) as Geometry;
-          if (containsPoint(geometry, lon, lat)) {
-            row = candidate;
-            break;
-          }
+        let geometry: Geometry | null = null;
+        if (typeof candidate.geometry === "string") geometry = JSON.parse(candidate.geometry) as Geometry;
+        else if (s(candidate.geometry_key) && this.objects)
+          geometry = JSON.parse(new TextDecoder().decode(await this.objects.get(parseObjectKey(String(candidate.geometry_key))))) as Geometry;
+        if (geometry && containsPoint(geometry, lon, lat)) {
+          row = candidate;
+          break;
         }
       }
-      if (!row && candidates.length) {
+      if (!row && candidates.length && candidates.every((c) => c.geometry === null && c.geometry_key === null)) {
         // Without geometries, the nearest centroid among bbox candidates.
         row = candidates
           .filter((c) => c.lat !== null)

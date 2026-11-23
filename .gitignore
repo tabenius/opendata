@@ -10,3 +10,4 @@ target/
 /data/
 /var/
 coverage/
+rust/target/

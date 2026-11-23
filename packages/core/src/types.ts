@@ -67,6 +67,8 @@ export interface AreaRecord {
   lon?: number | null;
   bbox?: [number, number, number, number] | null;
   geometryKey?: string | null;
+  /** GeoJSON Polygon/MultiPolygon in WGS 84. */
+  geometry?: { type: string; coordinates: unknown } | null;
 }
 
 export interface AreaStatRecord {

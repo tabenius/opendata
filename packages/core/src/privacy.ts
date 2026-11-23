@@ -28,8 +28,12 @@ export function classify(input: ClassificationInput): Classification {
   if (input.idType && /PERSON|SAMORD/i.test(input.idType)) return "natural";
   if (input.jurform !== undefined && input.jurform !== null && NATURAL_PERSON_JURFORM.has(String(input.jurform))) return "natural";
   if (input.bvForm && NATURAL_PERSON_BV_FORMS.has(input.bvForm.replace(/-ORGFO$/, ""))) return "natural";
-  if (!isLegalEntityNumber(input.id)) return /^\d{10,12}$/.test(input.id.replace(/[\s-]/g, "")) ? "natural" : "unknown";
-  return "legal";
+  let digits = input.id.replace(/[\s-]/g, "");
+  if (/^16\d{10}$/.test(digits)) digits = digits.slice(2);
+  if (isLegalEntityNumber(digits)) return "legal";
+  // Personnummer/samordningsnummer shapes: 12 digits, or 10 digits whose month digit (third) is 0 or 1.
+  if (/^\d{12}$/.test(digits) || (/^\d{10}$/.test(digits) && Number(digits[2]) <= 1)) return "natural";
+  return "unknown";
 }
 
 export function isPublishable(input: ClassificationInput): boolean {

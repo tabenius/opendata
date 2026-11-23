@@ -1,0 +1,145 @@
+{
+  "classification": [
+    {
+      "id": "5560360793",
+      "expect": "legal"
+    },
+    {
+      "id": "556036-0793",
+      "expect": "legal"
+    },
+    {
+      "id": "5560360794",
+      "expect": "unknown"
+    },
+    {
+      "id": "8506121238",
+      "expect": "natural"
+    },
+    {
+      "id": "195006121234",
+      "expect": "natural"
+    },
+    {
+      "id": "165560360793",
+      "expect": "legal"
+    },
+    {
+      "id": "2120000142",
+      "expect": "legal"
+    },
+    {
+      "id": "8020022771",
+      "expect": "legal"
+    },
+    {
+      "id": "abc",
+      "expect": "unknown"
+    },
+    {
+      "id": "5560360793",
+      "jurform": "10",
+      "expect": "natural"
+    },
+    {
+      "id": "5560360793",
+      "jurform": "91",
+      "expect": "natural"
+    },
+    {
+      "id": "5560360793",
+      "jurform": "49",
+      "expect": "legal"
+    },
+    {
+      "id": "5560360793",
+      "idType": "PERSON-IDORG",
+      "expect": "natural"
+    },
+    {
+      "id": "5560360793",
+      "bvForm": "E-ORGFO",
+      "expect": "natural"
+    }
+  ],
+  "points": [
+    {
+      "lat": 57.7072,
+      "lon": 11.9668,
+      "sweref": {
+        "n": 6400157.672880344,
+        "e": 319285.039169859
+      },
+      "cell": 577019196
+    },
+    {
+      "lat": 59.3275,
+      "lon": 18.0545,
+      "sweref": {
+        "n": 6580505.819269776,
+        "e": 673779.2799759912
+      },
+      "cell": 593219805
+    },
+    {
+      "lat": 67.8558,
+      "lon": 20.2253,
+      "sweref": {
+        "n": 7536069.9699322255,
+        "e": 719583.1230046947
+      },
+      "cell": 678520022
+    },
+    {
+      "lat": 55.605,
+      "lon": 13.0038,
+      "sweref": {
+        "n": 6163926.553426578,
+        "e": 374243.75852861896
+      },
+      "cell": 556019300
+    }
+  ],
+  "addresses": [
+    {
+      "raw": "Storgatan 12 B lgh 1102",
+      "parsed": {
+        "street": "STORGATAN",
+        "number": "12",
+        "letter": "B"
+      },
+      "key": "STORGATAN|12B|41101"
+    },
+    {
+      "raw": "Kaffegatan 1",
+      "parsed": {
+        "street": "KAFFEGATAN",
+        "number": "1"
+      },
+      "key": "KAFFEGATAN|1|41101"
+    },
+    {
+      "raw": "Box 123",
+      "parsed": {
+        "street": "BOX",
+        "number": "123"
+      },
+      "key": "BOX|123|41101"
+    },
+    {
+      "raw": "Vägen",
+      "parsed": {
+        "street": "VÄGEN"
+      },
+      "key": "VÄGEN||41101"
+    },
+    {
+      "raw": "Övre Husargatan 3-5",
+      "parsed": {
+        "street": "ÖVRE HUSARGATAN",
+        "number": "3"
+      },
+      "key": "ÖVRE HUSARGATAN|3|41101"
+    }
+  ]
+}

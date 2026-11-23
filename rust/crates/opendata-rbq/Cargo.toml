@@ -1,0 +1,21 @@
+[package]
+name = "opendata-rbq"
+description = "Publish and verify opendata snapshots as rbq layers using rebsync-core's object storage"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "opendata-rbq"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
+rebsync-core = { git = "https://github.com/tabenius/rebsync", rev = "8023dcb7e49f1577b9bc639ea9c3773ba06f09ba", default-features = false, features = ["storage-object-store"] }
+
+[dev-dependencies]
+tempfile = "3"

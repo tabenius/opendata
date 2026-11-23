@@ -10,3 +10,4 @@ export * from "./sources";
 export * from "./types";
 export { migrations } from "@opendata/schema";
 export * from "./fixtures";
+export * from "./snapshot";
