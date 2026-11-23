@@ -6,6 +6,9 @@
  *   opendata config explain                effective configuration (secrets redacted)
  *   opendata ingest fixture                load the fictional demo dataset
  *   opendata ingest scb --kommun 1480      SCB företagsregistret, one kommun
+ *   opendata dump scb --kommun 1480 --out DIR   SCB API rows as JSONL for opendata-ingest
+ *   opendata snapshot publish|list|fsck|latest|import [--label L] [--budget N]
+ *   opendata mcp                           MCP over stdio (for Claude Desktop / Claude Code)
  *
  * Global: --config PATH, --data-dir DIR, --listen HOST:PORT, --public-url URL
  */
@@ -62,7 +65,7 @@ async function main(argv: string[]) {
       case "serve": {
         const app = createApi(services, { extend: (a) => extendLinux(a, services, config) });
         const [host, port] = config.listen.split(":");
-        serve({ fetch: app.fetch, hostname: host, port: Number(port) }, (info) => console.log(`opendata listening on http://${info.address}:${info.port}`));
+        serve({ fetch: app.fetch, hostname: host, port: Number(port) }, (info) => console.error(`opendata listening on http://${info.address}:${info.port}`));
         await new Promise(() => undefined);
         return;
       }
@@ -91,7 +94,7 @@ async function main(argv: string[]) {
     if (await runCommand(command, sub, flags, services, config, repo)) return;
     throw new Error(`unknown command: ${positional.join(" ")} (try: opendata help)`);
   } finally {
-    if (command !== "serve") {
+    if (command !== "serve" && command !== "mcp") {
       await services.kv.close?.();
       await services.sql.close();
     }

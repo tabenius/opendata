@@ -7,9 +7,14 @@ import type { Services } from "@opendata/api";
 import { latestSnapshot, publishDatabase, syncLatest, LAYER } from "@opendata/datasets";
 import { fsckLayer, listSnapshots } from "@opendata/rbq";
 import { ScbFrClient } from "@opendata/sources";
+import { handleMcp } from "@opendata/mcp";
+import { serveStdio } from "@opendata/mcp/stdio";
 import { readSecretFile, type Config } from "./config";
 
-export function extendLinux(_app: Hono, _services: Services, _config: Config): void {}
+export function extendLinux(app: Hono, services: Services, config: Config): void {
+  const token = config.mcp.token_file ? readSecretFile(config.mcp.token_file) : undefined;
+  app.all("/mcp", (c) => handleMcp(c.req.raw, { sql: services.sql, objects: services.objects, token }));
+}
 
 const str = (v: string | true | undefined) => (typeof v === "string" ? v : undefined);
 const print = (v: unknown) => console.log(JSON.stringify(v, null, 2));
@@ -46,6 +51,10 @@ export async function runCommand(
         print(await latestSnapshot(services.objects, label));
         return true;
     }
+  }
+  if (command === "mcp") {
+    await serveStdio(services.sql, services.objects);
+    return true;
   }
   if (command === "dump" && sub === "scb") {
     // JSONL for `opendata-ingest build --scb-legal-units/--scb-workplaces`.

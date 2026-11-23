@@ -95,3 +95,19 @@ describe("Worker snapshot import", () => {
     }
   }, 60000);
 });
+
+describe("Worker MCP endpoint", () => {
+  it("answers MCP tool calls over Streamable HTTP in workerd", async () => {
+    const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
+    const { StreamableHTTPClientTransport } = await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
+    const fetcher = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const res = await mf.dispatchFetch(String(input), init as never);
+      return new Response(res.body as never, { status: res.status, headers: res.headers as never });
+    }) as typeof fetch;
+    const client = new Client({ name: "worker-test", version: "1" });
+    await client.connect(new StreamableHTTPClientTransport(new URL("http://worker.test/mcp"), { fetch: fetcher }));
+    const r = (await client.callTool({ name: "workplaces_near", arguments: { lat: FIXTURE_CENTER.lat, lon: FIXTURE_CENTER.lon, radiusM: 3000, first: 100 } })) as { content: { text: string }[] };
+    expect(JSON.parse(r.content[0]!.text).result.items).toHaveLength(12);
+    await client.close();
+  });
+});

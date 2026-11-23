@@ -17,11 +17,13 @@
     "@opendata/ports": "workspace:*",
     "@opendata/rbq": "workspace:*",
     "hono": "^4.6.0",
-    "@opendata/datasets": "workspace:*"
+    "@opendata/datasets": "workspace:*",
+    "@opendata/mcp": "workspace:*"
   },
   "devDependencies": {
     "miniflare": "^4.0.0",
     "wrangler": "^4.0.0",
-    "@opendata/adapters-object": "workspace:*"
+    "@opendata/adapters-object": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.20.0"
   }
 }

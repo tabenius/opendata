@@ -30,5 +30,5 @@ SNAPSHOT_LABEL = "local"
 # Snapshot import check and outbox delivery.
 crons = ["*/15 * * * *"]
 
-# Secrets (wrangler secret put NAME): ADMIN_TOKEN, RESEND_API_KEY,
+# Secrets (wrangler secret put NAME): ADMIN_TOKEN, MCP_TOKEN (optional), RESEND_API_KEY,
 # RBQ_REPOSITORIES (JSON: {"<uuid>": {"token": "rbm_...", "prefix": ""}}).

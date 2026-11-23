@@ -23,6 +23,7 @@ export interface Config {
   px: { tables: { id: string; region_variable?: string; filters?: Record<string, string> }[] };
   rbq: { repositories: { id: string; token_file: string; prefix: string }[] };
   admin: { token_file?: string };
+  mcp: { token_file?: string };
   limits: { rate_per_minute: number; max_depth: number };
   snapshot: { label: string; chunk_bytes: number };
 }
@@ -40,6 +41,7 @@ export const DEFAULTS: Config = {
   px: { tables: [] },
   rbq: { repositories: [] },
   admin: {},
+  mcp: {},
   limits: { rate_per_minute: 120, max_depth: 8 },
   snapshot: { label: "local", chunk_bytes: 65536 },
 };
@@ -53,7 +55,7 @@ function merge(base: Json, layer: Json, where: string, baseDir: string): Json {
   for (const [key, value] of Object.entries(layer)) {
     if (!(key in base)) {
       // Optional keys are declared by the defaults' shape; a few sections take arbitrary optional keys.
-      const optional = ["objects", "kv", "mail", "scb", "bolagsverket", "admin"].some((s) => where.endsWith(`.${s}`) || where === s);
+      const optional = ["objects", "kv", "mail", "scb", "bolagsverket", "admin", "mcp"].some((s) => where.endsWith(`.${s}`) || where === s);
       if (!optional) throw new Error(`unknown configuration key ${where ? `${where}.` : ""}${key}`);
     }
     const current = base[key];
@@ -81,6 +83,7 @@ const KNOWN: Record<string, string[]> = {
   scb: ["api_key_file"],
   bolagsverket: ["environment", "client_id", "client_secret_file"],
   admin: ["token_file"],
+  mcp: ["token_file"],
 };
 
 function checkSections(config: Json) {

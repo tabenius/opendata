@@ -14,6 +14,7 @@ export interface Env {
   SNAPSHOT_LABEL?: string;
   IMPORT_ROWS_PER_TICK?: string;
   ADMIN_TOKEN?: string;
+  MCP_TOKEN?: string;
   RESEND_API_KEY?: string;
   RBQ_REPOSITORIES?: string;
 }
