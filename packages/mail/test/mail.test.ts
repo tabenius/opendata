@@ -132,3 +132,19 @@ describe("watches", () => {
     expect(await sql.first("SELECT count(*) AS c FROM watch")).toEqual({ c: 0 });
   });
 });
+
+describe("outbox budget", () => {
+  it("does not let exhausted envelopes starve newer mail", async () => {
+    const log = new MessageLog(new MemoryObjectStore());
+    const kv = new MemoryKvStore();
+    for (let i = 0; i < 3; i++) {
+      const ref = await log.append(OUTBOX, { idempotency: `old-${i}`, from, to: [{ email: "a@b.se" }], subject: "old", text: "t", created_at: `2026-01-0${i + 1}T00:00:00.000Z` });
+      await kv.put(`mail/attempts/${ref.sha12}`, "8");
+    }
+    await log.append(OUTBOX, { idempotency: "new", from, to: [{ email: "a@b.se" }], subject: "new", text: "t", created_at: "2026-11-23T00:00:00.000Z" });
+    const mailer = new MemoryMailer();
+    const report = await deliverOutbox(log, mailer, kv, { limit: 2 });
+    expect(report).toMatchObject({ delivered: 1, gaveUp: 3 });
+    expect(mailer.sent[0]!.subject).toBe("new");
+  });
+});

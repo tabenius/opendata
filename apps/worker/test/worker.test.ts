@@ -130,3 +130,16 @@ describe("Worker watches and mail", () => {
     }
   }, 60000);
 });
+
+describe("Worker rate limiting", () => {
+  it("counts requests across requests in one isolate", async () => {
+    const { instance } = await startWorker({ RATE_LIMIT_PER_MINUTE: "2" });
+    try {
+      const codes: number[] = [];
+      for (let i = 0; i < 3; i++) codes.push((await instance.dispatchFetch("http://worker.test/graphql?query={sources{id}}", { headers: { "cf-connecting-ip": "9.9.9.9" } })).status);
+      expect(codes).toEqual([200, 200, 429]);
+    } finally {
+      await instance.dispose();
+    }
+  }, 60000);
+});

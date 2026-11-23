@@ -82,3 +82,12 @@ describe("GraphQL API", () => {
     expect((await app.request("/healthz")).status).toBe(200);
   });
 });
+
+describe("organisation workplaces connection", () => {
+  it("carries attribution like workplacesNear", async () => {
+    const { app, data } = await fixtureApi();
+    const r = await gql(app, `query($o: ID!) { organisation(orgnr: $o) { name workplaces { attribution items { name } } } }`, { o: data.organisations[0]!.orgnr });
+    expect(r.errors).toBeUndefined();
+    expect(r.data.organisation.workplaces.attribution.join(" ")).toMatch(/SCB/);
+  });
+});

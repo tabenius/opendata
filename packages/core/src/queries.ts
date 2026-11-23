@@ -12,6 +12,8 @@ import { containsPoint, type Geometry } from "./polygon";
 import { SOURCES, type SourceInfo } from "./sources";
 
 export const MAX_PAGE = 100;
+/** Nearest candidates considered per proximity query (pagination stays within them). */
+export const MAX_NEAR_CANDIDATES = 5000;
 
 export interface Address {
   street: string | null;
@@ -321,10 +323,14 @@ export class Queries {
       sniClause += sniClause ? " OR w.sni LIKE ?" : "w.sni LIKE ?";
       params.push(`${code}%`);
     }
+    // Order by an equirectangular distance in SQL before the cap, so the cap
+    // drops the farthest candidates, never the nearest. Exact haversine below.
+    const k = Math.cos((center.lat * Math.PI) / 180);
     const rows = await this.sql.query<WpRow>(
       `SELECT w.*, o.name AS organisation_name FROM workplace w LEFT JOIN organisation o ON o.orgnr = w.orgnr
-       WHERE (${where}) ${sniClause ? `AND (${sniClause})` : ""} LIMIT 5000`,
-      params,
+       WHERE (${where}) ${sniClause ? `AND (${sniClause})` : ""}
+       ORDER BY (w.lat - ?) * (w.lat - ?) + ((w.lon - ?) * ?) * ((w.lon - ?) * ?), w.cfar LIMIT ?`,
+      [...params, center.lat, center.lat, center.lon, k, center.lon, k, MAX_NEAR_CANDIDATES],
     );
     const within = rows
       .map((r) => ({ r, d: haversineMeters(center!, { lat: Number(r.lat), lon: Number(r.lon) }) }))

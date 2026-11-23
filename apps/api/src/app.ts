@@ -20,11 +20,13 @@ export function clientId(c: HonoContext): string {
 export interface ApiOptions {
   /** Mount extra routes (MCP, rbq repository) before the 404 handler. */
   extend?: (app: Hono) => void;
+  /** Share one limiter across apps built per request (Workers build one per request). */
+  limiter?: RateLimiter;
 }
 
 export function createApi(services: Services, options: ApiOptions = {}) {
   const queries = new Queries(services.sql, services.objects);
-  const limiter = new RateLimiter(services.config.rateLimitPerMinute ?? 120);
+  const limiter = options.limiter ?? new RateLimiter(services.config.rateLimitPerMinute ?? 120);
   const maxDepth = services.config.maxDepth ?? 8;
   const limitsPlugin: Plugin = {
     onValidate({ addValidationRule }) {

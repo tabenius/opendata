@@ -17,14 +17,15 @@ export async function deliverOutbox(log: MessageLog, mailer: Mailer, kv: KvStore
   let budget = options.limit ?? 100;
   for (const ref of await log.list(OUTBOX)) {
     if (await log.receipt(ref)) continue;
-    if (budget-- <= 0) {
-      report.pending++;
-      continue;
-    }
+    // Exhausted envelopes are skipped before they can use up the budget.
     const attemptsKey = `mail/attempts/${ref.sha12}`;
     const attempts = Number((await kv.getText(attemptsKey)) ?? 0);
     if (attempts >= MAX_ATTEMPTS) {
       report.gaveUp++;
+      continue;
+    }
+    if (budget-- <= 0) {
+      report.pending++;
       continue;
     }
     const envelope = await log.read(ref);

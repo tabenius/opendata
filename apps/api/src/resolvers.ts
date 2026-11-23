@@ -51,7 +51,10 @@ export const resolvers = {
     },
   },
   Organisation: {
-    workplaces: (o: Organisation, a: { first?: number; after?: string }, c: Context) => c.queries.workplacesOf(o.orgnr, a.first, a.after),
+    workplaces: async (o: Organisation, a: { first?: number; after?: string }, c: Context) => ({
+      ...(await c.queries.workplacesOf(o.orgnr, a.first, a.after)),
+      attribution: attribution("scb-fr", "lantmateriet-adress"),
+    }),
     annualReports: async (o: Organisation, _: unknown, c: Context) =>
       (await c.queries.annualReports(o.orgnr)).map((r) => ({ ...r, downloadPath: r.objectKey ? `/files/${r.objectKey}` : null })),
   },

@@ -17,6 +17,7 @@ import { classify } from "./privacy";
 import { migrations } from "@opendata/schema";
 
 export const SNAPSHOT_META_SCHEMA = "opendata.snapshot.v1";
+const LEASE_MS = 10 * 60 * 1000;
 
 export interface TableSpec {
   name: string;
@@ -163,9 +164,17 @@ export async function importSnapshot(sql: SqlStore, objects: ObjectStore, manife
   if (manifest.layer !== "opendata") throw StorageError.invalidKey("not an opendata snapshot");
   if ((await activeSnapshot(sql)) === manifest.id) return { snapshotId: manifest.id, table: TABLES.length, chunk: 0, carry: "", rows: 0, skipped: 0, done: true };
 
-  const lease = await getMeta(sql, "import_lease");
-  if (lease && Number(lease) > now().getTime()) throw StorageError.unavailable("another import holds the lease");
-  await setMeta(sql, "import_lease", String(now().getTime() + 10 * 60 * 1000), now());
+  // Atomic lease: one conditional write takes it only if absent or expired;
+  // `value` is "<expiry ms>|<owner>", and only the owner releases it.
+  const owner = crypto.randomUUID();
+  const leaseValue = `${now().getTime() + LEASE_MS}|${owner}`;
+  const taken = await sql.exec(
+    `INSERT INTO dataset_meta (key, value, updated_at) VALUES ('import_lease', ?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+     WHERE CAST(substr(dataset_meta.value, 1, instr(dataset_meta.value, '|') - 1) AS INTEGER) <= ?`,
+    [leaseValue, now().toISOString(), now().getTime()],
+  );
+  if (taken.changes !== 1) throw StorageError.unavailable("another import holds the lease");
 
   try {
     const metaFile = manifest.files.find((f) => f.path === "meta.json");
@@ -235,7 +244,7 @@ export async function importSnapshot(sql: SqlStore, objects: ObjectStore, manife
     await sql.batch(cleanup);
     return { ...state, done: true };
   } finally {
-    await sql.exec("DELETE FROM dataset_meta WHERE key = 'import_lease'");
+    await sql.exec("DELETE FROM dataset_meta WHERE key = 'import_lease' AND value = ?", [leaseValue]);
   }
 }
 

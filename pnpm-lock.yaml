@@ -292,6 +292,9 @@ importers:
       '@opendata/adapters-sql':
         specifier: workspace:*
         version: link:../adapters-sql
+      '@opendata/rbq':
+        specifier: workspace:*
+        version: link:../rbq
 
   packages/datasets:
     dependencies:
