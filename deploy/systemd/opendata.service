@@ -1,0 +1,20 @@
+[Unit]
+Description=opendata HTTP server (PWA, GraphQL, MCP, rbq repositories)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=opendata
+Group=opendata
+WorkingDirectory=/opt/opendata
+ExecStart=/opt/opendata/apps/linux/bin/opendata.mjs serve --config /etc/opendata/config.toml
+Restart=on-failure
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/var/lib/opendata
+ReadOnlyPaths=/etc/opendata
+
+[Install]
+WantedBy=multi-user.target

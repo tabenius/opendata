@@ -1,0 +1,20 @@
+{
+  "name": "@opendata/adapters-object",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./memory": "./src/memory.ts",
+    "./fs": "./src/fs.ts",
+    "./r2": "./src/r2.ts",
+    "./s3": "./src/s3.ts"
+  },
+  "dependencies": {
+    "@opendata/ports": "workspace:*",
+    "aws4fetch": "^1.0.20"
+  },
+  "devDependencies": {
+    "@opendata/conformance": "workspace:*"
+  }
+}

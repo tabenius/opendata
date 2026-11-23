@@ -1,0 +1,15 @@
+{
+  "name": "@opendata/conformance",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./miniflare": "./src/miniflare.ts"
+  },
+  "dependencies": {
+    "@opendata/ports": "workspace:*",
+    "vitest": "^3.2.4",
+    "miniflare": "^4.0.0"
+  }
+}

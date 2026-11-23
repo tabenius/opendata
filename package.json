@@ -1,0 +1,34 @@
+{
+  "name": "opendata",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "check:contract": "cd contracts/rbq && sha256sum --check SHA256SUMS",
+    "gen": "tsx scripts/gen-shared.ts && tsx scripts/gen-headers.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "miniflare": "^4.20260730.0",
+    "tsx": "^4.23.15",
+    "turbo": "^2.11.13",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7",
+    "wrangler": "^4.166.0",
+    "@opendata/adapters-object": "workspace:*",
+    "@opendata/adapters-sql": "workspace:*",
+    "@opendata/core": "workspace:*",
+    "@opendata/datasets": "workspace:*",
+    "@opendata/schema": "workspace:*",
+    "@opendata/api": "workspace:*",
+    "@opendata/adapters-kv": "workspace:*",
+    "@hono/node-server": "^1.13.0",
+    "@opendata/rbq": "workspace:*"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@opendata/sources",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@opendata/core": "workspace:*",
+    "@opendata/ports": "workspace:*",
+    "@opendata/rbq": "workspace:*",
+    "fflate": "^0.8.2"
+  },
+  "devDependencies": {
+    "@opendata/adapters-sql": "workspace:*",
+    "@opendata/adapters-object": "workspace:*"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "@opendata/adapters-kv",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./sqlite": "./src/sqlite.ts",
+    "./redis": "./src/redis.ts"
+  },
+  "dependencies": {
+    "@opendata/ports": "workspace:*",
+    "ioredis": "^5.4.2"
+  },
+  "devDependencies": {
+    "@opendata/conformance": "workspace:*",
+    "@opendata/adapters-sql": "workspace:*"
+  }
+}

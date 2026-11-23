@@ -1,0 +1,18 @@
+[package]
+name = "opendata-geo"
+description = "SWEREF 99 TM <-> WGS 84, grid cells and Swedish identity-number classification shared with the TypeScript core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[features]
+wasm = ["dep:wasm-bindgen"]
+
+[dependencies]
+wasm-bindgen = { version = "0.2", optional = true }
+
+[dev-dependencies]
+serde_json.workspace = true

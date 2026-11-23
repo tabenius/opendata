@@ -1,0 +1,58 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  typescript:
+    runs-on: ubuntu-latest
+    services:
+      valkey:
+        image: valkey/valkey:8
+        ports: ["6379:6379"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install the rbq CLI (interop tests)
+        run: cargo install --locked --git https://github.com/tabenius/rebsync --rev d07b5073837ce8b60620b99d02d93b84fd90f3bb rebsync-cli --bin rbq --root "$HOME/.rbq"
+      - name: Start an S3-compatible test server (moto)
+        run: |
+          pip install "moto[server]==5.*"
+          moto_server -p 9455 &
+          sleep 3
+      - run: pnpm check:contract
+      - run: pnpm typecheck
+      - run: pnpm --filter @opendata/pwa build
+      - run: pnpm test
+        env:
+          REDIS_URL: redis://127.0.0.1:6379
+          S3_TEST_ENDPOINT: http://127.0.0.1:9455
+          RBQ_BIN: /home/runner/.rbq/bin/rbq
+  rust:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - run: cargo test --workspace --locked
+      - run: cargo fmt --check
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - run: rustup target add wasm32-unknown-unknown && cargo build -p opendata-geo --features wasm --target wasm32-unknown-unknown --release

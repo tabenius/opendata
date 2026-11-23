@@ -1,0 +1,15 @@
+[workspace]
+members = ["crates/opendata-geo", "crates/opendata-ingest", "crates/opendata-rbq"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/tabenius/opendata"
+
+[workspace.dependencies]
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"

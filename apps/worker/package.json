@@ -1,0 +1,30 @@
+{
+  "name": "@opendata/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@opendata/adapters-kv": "workspace:*",
+    "@opendata/adapters-object": "workspace:*",
+    "@opendata/adapters-sql": "workspace:*",
+    "@opendata/api": "workspace:*",
+    "@opendata/core": "workspace:*",
+    "@opendata/ports": "workspace:*",
+    "@opendata/rbq": "workspace:*",
+    "hono": "^4.6.0",
+    "@opendata/datasets": "workspace:*",
+    "@opendata/mcp": "workspace:*",
+    "@opendata/mail": "workspace:*"
+  },
+  "devDependencies": {
+    "miniflare": "^4.0.0",
+    "wrangler": "^4.0.0",
+    "@opendata/adapters-object": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.20.0"
+  }
+}

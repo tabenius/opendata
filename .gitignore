@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.turbo/
+.wrangler/
+target/
+*.sqlite
+*.sqlite-*
+.env
+.dev.vars
+/data/
+/var/
+coverage/
+rust/target/
