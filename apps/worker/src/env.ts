@@ -12,6 +12,7 @@ export interface Env {
   MAIL_FROM_NAME?: string;
   RATE_LIMIT_PER_MINUTE?: string;
   SNAPSHOT_LABEL?: string;
+  IMPORT_ROWS_PER_TICK?: string;
   ADMIN_TOKEN?: string;
   RESEND_API_KEY?: string;
   RBQ_REPOSITORIES?: string;

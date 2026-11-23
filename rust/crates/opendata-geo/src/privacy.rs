@@ -37,7 +37,7 @@ pub fn luhn_valid(digits: &str) -> bool {
             d
         })
         .sum();
-    sum % 10 == 0
+    sum.is_multiple_of(10)
 }
 
 /// 10 digits, Luhn-valid, third digit >= 2.

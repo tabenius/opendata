@@ -20,6 +20,11 @@
     "turbo": "^2.11.13",
     "typescript": "^5.9.3",
     "vitest": "^3.2.7",
-    "wrangler": "^4.166.0"
+    "wrangler": "^4.166.0",
+    "@opendata/adapters-object": "workspace:*",
+    "@opendata/adapters-sql": "workspace:*",
+    "@opendata/core": "workspace:*",
+    "@opendata/datasets": "workspace:*",
+    "@opendata/schema": "workspace:*"
   }
 }

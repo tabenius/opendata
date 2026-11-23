@@ -62,3 +62,36 @@ describe("Cloudflare Worker (workerd)", () => {
     expect(body.data.organisations.items[0].name).toBe("Kodverkstaden AB");
   });
 });
+
+describe("Worker snapshot import", () => {
+  it("imports a published snapshot from R2 into D1 across cron ticks", async () => {
+    const { R2ObjectStore } = await import("@opendata/adapters-object");
+    const { SqliteSqlStore } = await import("@opendata/adapters-sql/sqlite");
+    const { publishDatabase } = await import("@opendata/datasets");
+    const { instance, sql } = await startWorker({ ADMIN_TOKEN: "admin-secret", IMPORT_ROWS_PER_TICK: "10", SNAPSHOT_LABEL: "national" });
+    try {
+      // Build a snapshot on "Linux" (SQLite) and publish it straight into the Worker's R2 bucket.
+      const src = new SqliteSqlStore(":memory:");
+      await migrate(src, migrations);
+      const repo = new Repository(src);
+      const d = fixtureDataset();
+      await repo.upsertAddresses(d.addresses);
+      await repo.upsertOrganisations(d.organisations);
+      await repo.upsertWorkplaces(d.workplaces);
+      const bucket = (await instance.getR2Bucket("OBJECTS")) as never;
+      const published = await publishDatabase(src, new R2ObjectStore(bucket), "national");
+      expect((await instance.dispatchFetch("http://worker.test/admin/import", { method: "POST" })).status).toBe(401);
+      let active: string | null = null;
+      for (let i = 0; i < 20 && active !== published.id; i++) {
+        const res = await instance.dispatchFetch("http://worker.test/admin/import", { method: "POST", headers: { Authorization: "Bearer admin-secret" } });
+        active = ((await res.json()) as { active: string | null }).active;
+      }
+      expect(active).toBe(published.id);
+      expect(await sql.first("SELECT count(*) AS c FROM workplace")).toEqual({ c: 12 });
+      const health = (await (await instance.dispatchFetch("http://worker.test/healthz")).json()) as { snapshot: string };
+      expect(health.snapshot).toBe(published.id);
+    } finally {
+      await instance.dispose();
+    }
+  }, 60000);
+});

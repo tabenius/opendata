@@ -141,5 +141,151 @@
       },
       "key": "ÖVRE HUSARGATAN|3|41101"
     }
+  ],
+  "tables": [
+    {
+      "name": "sni",
+      "pk": [
+        "code"
+      ],
+      "columns": [
+        "code",
+        "version",
+        "title"
+      ]
+    },
+    {
+      "name": "area",
+      "pk": [
+        "deso"
+      ],
+      "columns": [
+        "deso",
+        "regso",
+        "kommun",
+        "name",
+        "lat",
+        "lon",
+        "min_lat",
+        "min_lon",
+        "max_lat",
+        "max_lon",
+        "geometry_key",
+        "geometry"
+      ]
+    },
+    {
+      "name": "area_stat",
+      "pk": [
+        "deso",
+        "table_id",
+        "variable",
+        "period"
+      ],
+      "columns": [
+        "deso",
+        "table_id",
+        "variable",
+        "label",
+        "period",
+        "value"
+      ]
+    },
+    {
+      "name": "address",
+      "pk": [
+        "address_id"
+      ],
+      "columns": [
+        "address_id",
+        "street",
+        "number",
+        "letter",
+        "postcode",
+        "town",
+        "kommun",
+        "match_key",
+        "lat",
+        "lon",
+        "cell",
+        "deso",
+        "source_date"
+      ]
+    },
+    {
+      "name": "organisation",
+      "pk": [
+        "orgnr"
+      ],
+      "identity": "orgnr",
+      "columns": [
+        "orgnr",
+        "name",
+        "legal_form",
+        "legal_form_code",
+        "status",
+        "registered_at",
+        "deregistered_at",
+        "deregistration_reason",
+        "business_description",
+        "post_street",
+        "post_postcode",
+        "post_town",
+        "sni_primary",
+        "sni_codes",
+        "ad_block",
+        "sources",
+        "source_date",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "workplace",
+      "pk": [
+        "cfar"
+      ],
+      "identity": "orgnr",
+      "columns": [
+        "cfar",
+        "orgnr",
+        "name",
+        "sni",
+        "sni_division",
+        "size_class",
+        "status",
+        "visit_street",
+        "visit_postcode",
+        "visit_town",
+        "kommun",
+        "lan",
+        "post_street",
+        "post_postcode",
+        "post_town",
+        "address_id",
+        "lat",
+        "lon",
+        "cell",
+        "geocode_quality",
+        "ad_block",
+        "source_date"
+      ]
+    },
+    {
+      "name": "annual_report",
+      "pk": [
+        "document_id"
+      ],
+      "identity": "orgnr",
+      "columns": [
+        "document_id",
+        "orgnr",
+        "period_end",
+        "registered_at",
+        "format",
+        "object_key",
+        "sha256",
+        "size_bytes"
+      ]
+    }
   ]
 }

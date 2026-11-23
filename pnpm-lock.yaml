@@ -8,6 +8,21 @@ importers:
 
   .:
     devDependencies:
+      '@opendata/adapters-object':
+        specifier: workspace:*
+        version: link:packages/adapters-object
+      '@opendata/adapters-sql':
+        specifier: workspace:*
+        version: link:packages/adapters-sql
+      '@opendata/core':
+        specifier: workspace:*
+        version: link:packages/core
+      '@opendata/datasets':
+        specifier: workspace:*
+        version: link:packages/datasets
+      '@opendata/schema':
+        specifier: workspace:*
+        version: link:packages/schema
       '@types/node':
         specifier: ^22.20.5
         version: 22.20.5
@@ -81,6 +96,9 @@ importers:
       '@opendata/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@opendata/datasets':
+        specifier: workspace:*
+        version: link:../../packages/datasets
       '@opendata/ports':
         specifier: workspace:*
         version: link:../../packages/ports
@@ -117,6 +135,9 @@ importers:
       '@opendata/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@opendata/datasets':
+        specifier: workspace:*
+        version: link:../../packages/datasets
       '@opendata/ports':
         specifier: workspace:*
         version: link:../../packages/ports

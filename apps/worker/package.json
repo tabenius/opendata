@@ -16,10 +16,12 @@
     "@opendata/core": "workspace:*",
     "@opendata/ports": "workspace:*",
     "@opendata/rbq": "workspace:*",
-    "hono": "^4.6.0"
+    "hono": "^4.6.0",
+    "@opendata/datasets": "workspace:*"
   },
   "devDependencies": {
     "miniflare": "^4.0.0",
-    "wrangler": "^4.0.0"
+    "wrangler": "^4.0.0",
+    "@opendata/adapters-object": "workspace:*"
   }
 }

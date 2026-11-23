@@ -8,7 +8,7 @@ import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { checksum } from "../packages/adapters-sql/src/hash";
 import { migrations } from "../packages/schema/src/migrations";
-import { cellOf, classify, matchKey, parseStreetAddress, wgs84ToSweref99tm, withLuhn } from "../packages/core/src";
+import { TABLES, cellOf, classify, matchKey, parseStreetAddress, wgs84ToSweref99tm, withLuhn } from "../packages/core/src";
 
 export function generated() {
   const migrationsJson = JSON.stringify(migrations.map((m) => ({ id: m.id, sql: m.sql, checksum: checksum(m.sql) })), null, 2) + "\n";
@@ -31,7 +31,7 @@ export function generated() {
     const parsed = parseStreetAddress(raw);
     return { raw, parsed, key: matchKey({ ...parsed, postcode: "41101" }) };
   });
-  const vectors = JSON.stringify({ classification, points, addresses }, null, 2) + "\n";
+  const vectors = JSON.stringify({ classification, points, addresses, tables: TABLES }, null, 2) + "\n";
   return { migrationsJson, vectors };
 }
 
