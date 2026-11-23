@@ -77,7 +77,7 @@ export class RepositoryClient {
     private readonly token: string,
     private readonly fetcher: typeof fetch = fetch,
   ) {
-    if (!validToken(token)) throw new TypeError("token must be rbm_ followed by 64 lowercase hex digits");
+    if (!validToken(token)) throw new TypeError("token must be rbm_ or rbs_ followed by 64 lowercase hex digits");
     this.base = validateEndpoint(endpoint);
   }
 

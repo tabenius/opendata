@@ -13,8 +13,6 @@ path = "src/main.rs"
 anyhow.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-sha2.workspace = true
 tempfile = "3"
-chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
-rebsync-core = { git = "https://github.com/tabenius/rebsync", rev = "8023dcb7e49f1577b9bc639ea9c3773ba06f09ba", default-features = false, features = ["storage-object-store"] }
+rebsync-core = { git = "https://github.com/tabenius/rebsync", rev = "d07b5073837ce8b60620b99d02d93b84fd90f3bb", default-features = false, features = ["storage-object-store"] }
 

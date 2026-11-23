@@ -16,10 +16,11 @@ import { SqliteSqlStore } from "@opendata/adapters-sql/sqlite";
 import { MemoryKvStore } from "@opendata/adapters-kv";
 import { migrate } from "@opendata/adapters-sql";
 import { createApi } from "@opendata/api";
-import { migrations } from "@opendata/core";
+import { FIXTURE_CENTER, Queries, Repository, fixtureDataset, migrations } from "@opendata/core";
+import { publishDatabase, syncLatest } from "@opendata/datasets";
 import { generateToken } from "@opendata/rbq";
 
-const RBQ = process.env.RBQ_BIN ?? "/home/claude/tabenius/rebsync/target/release/rbq";
+const RBQ = process.env.RBQ_BIN ?? "";
 const available = existsSync(RBQ);
 const rust = fileURLToPath(new URL("../../rust/", import.meta.url));
 const ID = "6f1c1d0e-5a6b-4c2d-9e8f-7a6b5c4d3e2f";
@@ -78,19 +79,29 @@ describe.skipIf(!available)("rbq CLI against /api/rbq", () => {
     expect(readFileSync(out, "utf8")).toBe(readFileSync(file, "utf8"));
   });
 
-  it("pushes a layer snapshot from one store and pulls it into another", async () => {
+  it("pushes the opendata layer, pulls it elsewhere, and imports it", async () => {
+    // Publish the fixture dataset as an opendata snapshot in a local rbq store.
     const local = path.join(dir, "local-store");
-    const snap = path.join(dir, "snap");
-    execFileSync("mkdir", ["-p", `${snap}/tables`]);
-    writeFileSync(path.join(snap, "tables/organisation.ndjson"), Array.from({ length: 4000 }, (_, i) => JSON.stringify({ orgnr: String(i) })).join("\n"));
-    writeFileSync(path.join(snap, "meta.json"), '{"schema":"opendata.snapshot.v1"}');
-    // rbq's push/pull accept its own layer names, so this round trip uses "agenda".
-    execFileSync(path.join(rust, "target/debug/opendata-rbq"), ["publish", "--storage-root", local, "--dir", snap, "--layer", "agenda", "--label", "interop"]);
-    const pushed = (await rbq("push", "--store", local, "--source-id", "opendata-test", "--source-name", "opendata test", "--layer", "agenda"));
+    const src = new SqliteSqlStore(":memory:");
+    await migrate(src, migrations);
+    const repo = new Repository(src);
+    const d = fixtureDataset();
+    await repo.upsertAddresses(d.addresses);
+    await repo.upsertOrganisations(d.organisations);
+    await repo.upsertWorkplaces(d.workplaces);
+    const published = await publishDatabase(src, await FsObjectStore.open(local), "national");
+    // rbq (tabenius/rebsync#35) now exchanges the registered external layer.
+    const pushed = await rbq("push", "--store", local, "--source-id", "opendata-test", "--source-name", "opendata test", "--layer", "opendata");
     expect(pushed.complete).toBe(true);
     const other = path.join(dir, "other-store");
-    const pulled = (await rbq("pull", "--store", other, "--source-id", "opendata-test", "--layer", "agenda"));
+    const pulled = await rbq("pull", "--store", other, "--source-id", "opendata-test", "--layer", "opendata");
     expect(pulled.complete).toBe(true);
     expect((await rbq("sources")).sources.map((s: { id?: string; source_id?: string }) => s.id ?? s.source_id)).toContain("opendata-test");
+    // The pulled source namespace is an rbq store holding the same snapshot: import and query it.
+    const pulledStore = await FsObjectStore.open(path.join(other, "sources", "v1", "opendata-test", "objects"));
+    const dest = new SqliteSqlStore(":memory:");
+    await migrate(dest, migrations);
+    expect((await syncLatest(dest, pulledStore, "national")).active).toBe(published.id);
+    expect((await new Queries(dest).workplacesNear({ point: FIXTURE_CENTER, radiusM: 3000, first: 100 })).items).toHaveLength(12);
   });
 });

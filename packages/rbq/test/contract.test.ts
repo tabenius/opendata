@@ -13,6 +13,7 @@ import {
   MAX_SEGMENT_BYTES,
   SCHEMA,
   contract,
+  generateToken,
   sha256Hex,
   validEndpointId,
   validToken,
@@ -32,6 +33,7 @@ describe("vendored rbq-repository.v1 contract", () => {
     expect(ENDPOINT_PATH_PREFIX).toBe("/api/rbq/");
     expect(CONTENT_SHA256_HEADER).toBe("x-content-sha256");
     expect(MAX_OBJECT_BYTES).toBe(262144);
+    expect(contract.authentication.token_pattern).toBe("^rb[ms]_[0-9a-f]{64}$");
     expect(LIST_LIMIT_MAX).toBe(100);
     expect(LIST_LIMIT_DEFAULT).toBe(20);
     expect(contract.limits.key_bytes).toBe(MAX_KEY_BYTES);
@@ -53,6 +55,12 @@ describe("vendored rbq-repository.v1 contract", () => {
     for (const t of contract.vectors.tokens.invalid) expect(validToken(t)).toBe(false);
     for (const id of contract.vectors.endpoint_ids.valid) expect(validEndpointId(id)).toBe(true);
     for (const id of contract.vectors.endpoint_ids.invalid) expect(validEndpointId(id)).toBe(false);
+  });
+
+  it("issues scoped rbs_ tokens by default", () => {
+    expect(validToken(generateToken())).toBe(true);
+    expect(generateToken()).toMatch(/^rbs_/);
+    expect(generateToken("rbm")).toMatch(/^rbm_/);
   });
 
   it("uses lowercase hex SHA-256", () => {

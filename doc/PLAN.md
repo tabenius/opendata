@@ -408,10 +408,7 @@ can't call the Rust crate. Both sides run the same conformance vectors.
 
 ## 15. Open questions
 
-1. **rbq layer registry.** rbq hard-codes `LAYERS = ["mneme","frog","agenda","git"]`
-   and peers refuse other prefixes. Opendata snapshots need either an
-   `opendata` entry upstream or a registered-layers mechanism in rebsync.
-   Proposal in RBQ-COMPAT.md §6.
+1. ~~rbq layer registry~~: resolved by tabenius/rebsync#35 (RBQ-COMPAT §7).
 2. Lantmäteriet HVD application: the purpose statement must say addresses are
    used as places, not linked to residents. Check whether redistribution of
    derived coordinates via the API is covered.
@@ -448,10 +445,10 @@ can't call the Rust crate. Both sides run the same conformance vectors.
 - **Area geometry** lives in `area.geometry` (SQL), not as separate objects.
 - **Messages** use `messages/v1/<channel>/envelopes/…` and
   `…/receipts/…` so listing envelopes never returns receipts.
-- **rbq layers:** `opendata-rbq` reuses rebsync-core's storage, chunking,
-  manifest types, validation and reassembly, and computes manifest keys for
-  `opendata`/`messages` itself. The upstream registered-layers change
-  (RBQ-COMPAT §7) is still proposed, not made.
+- **rbq layers:** rebsync now registers `opendata` as an external layer
+  (tabenius/rebsync#35); `opendata-rbq` calls rebsync-core's publisher and
+  readers directly, and the real rbq CLI pushes and pulls `--layer opendata`.
+  The mail outbox is deliberately not a layer (RBQ-COMPAT §5, §7).
 - **Spatial index** is a 0.01° grid (`cell`), not H3.
 - **Persisted GraphQL queries** were not added; depth (8) and field (300)
   limits, body size cap and per-client rate limiting were.

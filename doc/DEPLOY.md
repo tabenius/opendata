@@ -85,4 +85,10 @@ the newest snapshot (`opendata snapshot import`).
 
 ```sh
 rbq repository --endpoint https://opendata.example.se/api/rbq/<id> --token-file ~/.config/rbq/opendata-token describe
+# Share a dataset: push the opendata layer from a local rbq store, pull it on another machine.
+rbq repository ... push --store /var/lib/opendata/objects --source-id national --source-name "opendata national" --layer opendata
+rbq repository ... pull --store ~/rbq-objects --source-id national --layer opendata
 ```
+
+The `--layer opendata` option needs an rbq that includes tabenius/rebsync#35.
+Tokens from `opendata rbq token` are `rbs_` (scoped sync) credentials.

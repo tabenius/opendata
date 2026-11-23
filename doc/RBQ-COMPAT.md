@@ -1,7 +1,8 @@
 # rbq compatibility
 
 How opendata's storage layers stay compatible with rbq (Rebeqah),
-`tabenius/rebsync` at commit `8023dcb7e49f1577b9bc639ea9c3773ba06f09ba`.
+`tabenius/rebsync` at commit `d07b5073837ce8b60620b99d02d93b84fd90f3bb`
+(tabenius/rebsync#35, which registers `opendata` as an external layer).
 
 rbq gives us three reusable things. It has **no** KV, SQL or mail
 abstraction, so those are defined here *in terms of* the three:
@@ -120,10 +121,11 @@ messages/v1/<channel>/receipts/<sha12>.json                delivery receipt
 - The Mailer consumer delivers outbox envelopes that have no receipt, then
   appends the receipt. Delivery is at-least-once; receivers dedupe on
   `idempotency`.
-- Because these are plain objects, `rbq repository push/pull` and rbq peer
-  transports (`tcp://`, `unix://`, `unix-dgram://`) can carry messages between
-  machines with no new code: an offline Linux box can queue mail that a
-  connected peer sends.
+- These are plain objects, not a layer. `rbq repository append/read/list`
+  carries them to and from an rbq repository, but rbq's peer and
+  repository **sync** admit only layer chunks and manifests, so `rbq peer
+  push/pull` never moves them. That is deliberate: envelopes contain e-mail
+  addresses, and rbq never propagates deletions.
 
 Wire-level "messages" in rbq's own sense (`rbq-peer/1` frames: `status`,
 `list`, `get`, `put`) are a transport, not application messages; we don't
@@ -144,34 +146,34 @@ CLI works against opendata:
 Errors 401/403/404/409/413/429 as in the contract. The server's tests use the
 contract's `vectors` block, as Dash's server does.
 
-## 7. Required upstream change in rebsync
+## 7. External layers in rebsync (done)
 
-`layer::LAYERS` is a hard-coded `["mneme","frog","agenda","git"]`, and
-`peer.rs`, `repository_sync.rs` and `serve.rs` refuse keys outside those
-prefixes. So **opendata layers can't be pushed or pulled with rbq today.**
-Options, in order of preference:
+`layer::LAYERS` used to be a hard-coded list of rbq's own layers, and peers,
+repository sync and `validate_layer` refused everything else, so opendata
+snapshots could not be exchanged with rbq.
 
-1. **Registered layers**: a config section `[[layers.extra]] name = "opendata"
-   prefixes = ["opendata/v1/", "messages/v1/"]` validated with the same
-   label/key rules, opt-in per peer. Keeps rbq's allow-list safety while
-   letting other RAGBAZ components participate.
-2. Add `opendata` (and `messages`) to the constant. Simple, but couples rbq to
-   this project.
-3. Use only `rbq repository append/read` (works today, no layer semantics, 256 KiB
-   per object).
+tabenius/rebsync#35 adds `layer::EXTERNAL_LAYERS = ["opendata"]` and
+`layer::is_known()`:
 
-Proposed: implement option 3 first (it unblocks M7 without touching rbq),
-open an issue/PR in rebsync for option 1.
+- rbq validates, loads, assembles, prunes and fscks `opendata` snapshots,
+  and admits them in peer and repository exchange under the same chunk and
+  manifest checks as its own layers;
+- rbq does not publish them and leaves them out of `rbq status`;
+- exchange takes them only when named: `rbq peer pull --layer opendata`,
+  `rbq repository push --layer opendata`;
+- `messages/` is not registered, so the outbox never leaves via sync.
 
-**Status (M7):** option 3 works today: the real `rbq repository
-append/read/list` against `/api/rbq/{id}` is tested, and so are `push`/`pull`
-of an rbq-named layer. `rust/opendata-rbq` publishes `opendata` snapshots
-with rebsync-core's own chunking and types; for rbq's own layers its output is
-accepted by rebsync-core's `layer::load`, `assemble` and `fsck`. Option 1 is
-still needed before `rbq` itself can push or pull the `opendata` layer.
+`rust/opendata-rbq` is now a thin wrapper over rebsync-core's own
+`publish_files`, `load`, `list`, `assemble` and `fsck`. The real rbq CLI test
+(`scripts/test/rbq-cli.test.ts`) publishes the fixture dataset, pushes it
+with `--layer opendata` to `/api/rbq/{id}`, pulls it into another store and
+imports it there.
+
+This is option 2 of the original proposal, generalised: a registered list in
+rebsync rather than per-peer configuration, so all peers agree on what they
+accept.
 
 ## 8. Things we intentionally do not copy
-
 - rbq's synchronous API: Workers need async; semantics are preserved instead.
 - restic integration: encrypted backup stays rbq's job. A Linux deployment can
   list the opendata object root in rbq's `backup.datasets`.

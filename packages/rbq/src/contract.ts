@@ -23,10 +23,10 @@ export const LIST_LIMIT_MIN: number = contract.limits.list_limit_min;
 export const LIST_LIMIT_MAX: number = contract.limits.list_limit_max;
 export const LIST_LIMIT_DEFAULT: number = contract.limits.list_limit_default;
 
-const TOKEN = /^rbm_[0-9a-f]{64}$/;
+const TOKEN = new RegExp(contract.authentication.token_pattern);
 const ENDPOINT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
-/** `rbm_` followed by 64 lowercase hex digits. */
+/** `rbm_` (MCP credential) or `rbs_` (scoped sync credential) + 64 lowercase hex digits. */
 export function validToken(token: string): boolean {
   return TOKEN.test(token);
 }
@@ -46,9 +46,13 @@ export function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-/** Random rbm_ token (WebCrypto, both runtimes). */
-export function generateToken(): string {
+/**
+ * Random token (WebCrypto, both runtimes). Repository tokens issued here are
+ * scoped to one repository and independently revocable, which is what the
+ * contract's `rbs_` kind means.
+ */
+export function generateToken(kind: "rbs" | "rbm" = "rbs"): string {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
-  return `rbm_${[...bytes].map((b) => b.toString(16).padStart(2, "0")).join("")}`;
+  return `${kind}_${[...bytes].map((b) => b.toString(16).padStart(2, "0")).join("")}`;
 }

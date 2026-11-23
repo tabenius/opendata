@@ -39,7 +39,7 @@ const RESERVED = ["opendata/", "messages/", "annual-reports/", "areas/"];
 export function validateRepositories(repos: Record<string, RbqRepositoryConfig>) {
   for (const [id, r] of Object.entries(repos)) {
     if (!validEndpointId(id)) throw new Error(`rbq repository id ${id} is not a lowercase UUID`);
-    if (!validToken(r.token)) throw new Error(`rbq repository ${id}: token must be rbm_ + 64 hex`);
+    if (!validToken(r.token)) throw new Error(`rbq repository ${id}: token must be rbm_/rbs_ + 64 hex`);
     if (!r.prefix || !r.prefix.endsWith("/")) throw new Error(`rbq repository ${id}: prefix must be non-empty and end with '/'`);
     validatePrefix(r.prefix);
     if (RESERVED.some((p) => r.prefix.startsWith(p) || p.startsWith(r.prefix))) throw new Error(`rbq repository ${id}: prefix overlaps a reserved namespace`);

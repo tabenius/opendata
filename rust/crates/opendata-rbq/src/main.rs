@@ -3,6 +3,7 @@
 //!   opendata-rbq publish --storage-root DIR --dir SNAPSHOT_DIR [--layer opendata] [--label local] [--chunk-bytes 65536]
 //!   opendata-rbq list    --storage-root DIR [--layer opendata] [--label L]
 //!   opendata-rbq verify  --storage-root DIR --id LABEL/NAME [--layer opendata]
+//!   opendata-rbq fsck    --storage-root DIR [--layer opendata]
 //!   opendata-rbq pull    --storage-root DIR --id LABEL/NAME --out DIR [--layer opendata]
 //!
 //! The storage root is an rbq object store (rebsync-core FsObjectStorage), the
@@ -48,7 +49,7 @@ fn run() -> Result<()> {
                 Err(_) => json!({ "migration": { "status": "current" } }),
             };
             let chunk = flags.get("chunk-bytes").map(|c| c.parse()).transpose()?.unwrap_or(DEFAULT_CHUNK_BYTES);
-            let out = publish_dir(&storage, layer, flags.get("label").map_or("local", String::as_str), &dir, owner, chunk, chrono::Utc::now())?;
+            let out = publish_dir(&storage, layer, flags.get("label").map_or("local", String::as_str), &dir, owner, chunk)?;
             println!("{}", serde_json::to_string_pretty(&out)?);
         }
         "list" => {
@@ -66,6 +67,13 @@ fn run() -> Result<()> {
             let out = PathBuf::from(flags.get("out").context("--out is required")?);
             assemble(&storage, &load(&storage, layer, id)?, &out)?;
             println!("{}", json!({ "ok": true, "id": id, "out": out }));
+        }
+        "fsck" => {
+            let report = rebsync_core::layer::fsck(&storage, &[layer])?;
+            println!("{}", serde_json::to_string_pretty(&report)?);
+            if !report.failures.is_empty() {
+                std::process::exit(2);
+            }
         }
         other => bail!("unknown command {other}"),
     }

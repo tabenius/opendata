@@ -83,12 +83,14 @@ describe("rbq layer snapshots", () => {
     expect(() => checkManifest({ ...base, files: sizes, digest: contentDigest(sizes) }, "opendata", "l/x")).toThrow(/add up/);
     for (const bad of ["", "/a", "a/../b", ".hidden", "a\\b", "a b"]) expect(() => validateRelativePath(bad), bad).toThrow();
     expect(() => manifestKey("unknown", "l/x")).toThrow(/unknown layer/);
+    // The outbox is not a layer: rbq peers never exchange it.
+    expect(() => manifestKey("messages", "l/x")).toThrow(/unknown layer/);
   });
 
   it("refuses to overwrite a manifest", async () => {
     const store = new MemoryObjectStore();
     const now = new Date(Date.UTC(2026, 0, 1));
-    await publishSnapshot(store, { layer: "messages", label: "x", files: [{ path: "f", data: bytes(1) }], owner: {}, now });
-    await expect(publishSnapshot(store, { layer: "messages", label: "x", files: [{ path: "f", data: bytes(1) }], owner: {}, now })).rejects.toMatchObject({ kind: "AlreadyExists" });
+    await publishSnapshot(store, { layer: "opendata", label: "x", files: [{ path: "f", data: bytes(1) }], owner: {}, now });
+    await expect(publishSnapshot(store, { layer: "opendata", label: "x", files: [{ path: "f", data: bytes(1) }], owner: {}, now })).rejects.toMatchObject({ kind: "AlreadyExists" });
   });
 });

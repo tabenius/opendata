@@ -9,10 +9,10 @@ import { StorageError, isStorageError, listAll, parseObjectKey, type ObjectKey, 
 import { createSha256, sha256Hex, validSha256 } from "./digest";
 
 export const SNAPSHOT_SCHEMA = "rbq.layer.snapshot.v1";
-/** rbq's own layers. */
-export const RBQ_LAYERS = ["mneme", "frog", "agenda", "git"] as const;
-/** Layers this project publishes (see doc/RBQ-COMPAT.md §7). */
-export const OPENDATA_LAYERS = ["opendata", "messages"] as const;
+/** rbq's own layers (rebsync `layer::LAYERS`). */
+export const RBQ_LAYERS = ["mneme", "frog", "agenda", "git", "hypomnema", "binaries"] as const;
+/** rbq's registered external layers (rebsync `layer::EXTERNAL_LAYERS`); this project publishes `opendata`. */
+export const OPENDATA_LAYERS = ["opendata"] as const;
 export const DEFAULT_CHUNK_BYTES = 65536;
 const MAX_CHUNK = 64 * 1024 * 1024;
 
