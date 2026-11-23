@@ -19,9 +19,7 @@ pub struct Area {
 fn prop(p: &Value, names: &[&str]) -> Option<String> {
     let obj = p.as_object()?;
     names.iter().find_map(|n| {
-        obj.iter()
-            .find(|(k, _)| k.eq_ignore_ascii_case(n))
-            .and_then(|(_, v)| v.as_str().map(str::to_string).or_else(|| v.as_i64().map(|i| i.to_string())))
+        obj.iter().find(|(k, _)| k.eq_ignore_ascii_case(n)).and_then(|(_, v)| v.as_str().map(str::to_string).or_else(|| v.as_i64().map(|i| i.to_string())))
     })
 }
 
@@ -52,12 +50,9 @@ pub fn parse(bytes: &[u8]) -> Result<Vec<Area>> {
         let sweref = first.abs() > 1000.0;
         let polygons: Vec<Vec<Vec<[f64; 2]>>> = match g["type"].as_str() {
             Some("Polygon") => vec![g["coordinates"].as_array().into_iter().flatten().map(|r| ring(r, sweref)).collect()],
-            Some("MultiPolygon") => g["coordinates"]
-                .as_array()
-                .into_iter()
-                .flatten()
-                .map(|p| p.as_array().into_iter().flatten().map(|r| ring(r, sweref)).collect())
-                .collect(),
+            Some("MultiPolygon") => {
+                g["coordinates"].as_array().into_iter().flatten().map(|p| p.as_array().into_iter().flatten().map(|r| ring(r, sweref)).collect()).collect()
+            }
             _ => continue,
         };
         let mut bbox = [f64::MAX, f64::MAX, f64::MIN, f64::MIN];
@@ -91,9 +86,9 @@ fn in_ring(lon: f64, lat: f64, ring: &[[f64; 2]]) -> bool {
 }
 
 pub fn contains(area: &Area, p: LatLon) -> bool {
-    area.polygons.iter().any(|poly| {
-        poly.first().is_some_and(|outer| in_ring(p.lon, p.lat, outer)) && !poly.iter().skip(1).any(|hole| in_ring(p.lon, p.lat, hole))
-    })
+    area.polygons
+        .iter()
+        .any(|poly| poly.first().is_some_and(|outer| in_ring(p.lon, p.lat, outer)) && !poly.iter().skip(1).any(|hole| in_ring(p.lon, p.lat, hole)))
 }
 
 pub fn store(conn: &mut Connection, areas: &[Area]) -> Result<()> {
@@ -130,10 +125,8 @@ pub fn assign(conn: &mut Connection, areas: &[Area]) -> Result<u64> {
             }
         }
     }
-    let points: Vec<(String, f64, f64)> = conn
-        .prepare("SELECT address_id, lat, lon FROM address")?
-        .query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?
-        .collect::<Result<_, _>>()?;
+    let points: Vec<(String, f64, f64)> =
+        conn.prepare("SELECT address_id, lat, lon FROM address")?.query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?.collect::<Result<_, _>>()?;
     let tx = conn.transaction()?;
     let mut assigned = 0;
     {

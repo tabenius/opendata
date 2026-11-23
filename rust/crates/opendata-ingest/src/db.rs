@@ -178,9 +178,7 @@ ON CONFLICT(address_id) DO UPDATE SET street = excluded.street, number = exclude
             }
             let postcode = normalise_postcode(a.postcode.as_deref());
             let key = match_key(&a.street, a.number.as_deref(), a.letter.as_deref(), postcode.as_deref());
-            upsert.execute(params![
-                a.id, a.street, a.number, a.letter, postcode, a.town, a.kommun, key, a.lat, a.lon, cell_of(p), a.deso, a.source_date
-            ])?;
+            upsert.execute(params![a.id, a.street, a.number, a.letter, postcode, a.town, a.kommun, key, a.lat, a.lon, cell_of(p), a.deso, a.source_date])?;
             let label = format!(
                 "{} {}",
                 address_label(&a.street, a.number.as_deref(), a.letter.as_deref(), postcode.as_deref(), a.town.as_deref()),
@@ -211,9 +209,7 @@ fn geocode(conn: &Connection, street: Option<&str>, postcode: Option<&str>) -> R
     };
     let mut lookup = conn.prepare_cached("SELECT address_id, lat, lon, cell FROM address WHERE match_key = ?1 LIMIT 1")?;
     let mut find = |key: String, quality: &'static str| -> Result<Option<Geo>> {
-        Ok(lookup
-            .query_row([key], |r| Ok(Geo { id: r.get(0)?, lat: r.get(1)?, lon: r.get(2)?, cell: r.get(3)?, quality }))
-            .optional()?)
+        Ok(lookup.query_row([key], |r| Ok(Geo { id: r.get(0)?, lat: r.get(1)?, lon: r.get(2)?, cell: r.get(3)?, quality })).optional()?)
     };
     let exact = find(match_key(&parsed.street, Some(number), parsed.letter.as_deref(), Some(&pc)), "exact")?;
     if exact.is_some() || parsed.letter.is_none() {

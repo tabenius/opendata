@@ -19,9 +19,7 @@ pub fn normalise_text(value: &str) -> String {
 
 static LGH: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\bLGH\s*\d+\b").unwrap());
 static CO: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\bC/O\b.*$").unwrap());
-static STREET: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"^(.*?)\s+(\d+)\s*([A-ZÅÄÖ])?(?:\s*[-–]\s*\d+[A-Z]?)?(?:\s+(?:TR|VÅN|BV|NB)\b.*)?$").unwrap()
-});
+static STREET: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^(.*?)\s+(\d+)\s*([A-ZÅÄÖ])?(?:\s*[-–]\s*\d+[A-Z]?)?(?:\s+(?:TR|VÅN|BV|NB)\b.*)?$").unwrap());
 
 pub fn parse_street_address(raw: &str) -> ParsedAddress {
     let text = normalise_text(raw);

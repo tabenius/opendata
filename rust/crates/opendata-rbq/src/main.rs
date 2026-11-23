@@ -25,7 +25,15 @@ fn main() {
 fn run() -> Result<()> {
     let mut args = std::env::args().skip(1);
     let Some(command) = args.next() else {
-        println!("{}", include_str!("main.rs").lines().take_while(|l| l.starts_with("//!")).map(|l| l.trim_start_matches("//!").trim_start_matches(' ')).collect::<Vec<_>>().join("\n"));
+        println!(
+            "{}",
+            include_str!("main.rs")
+                .lines()
+                .take_while(|l| l.starts_with("//!"))
+                .map(|l| l.trim_start_matches("//!").trim_start_matches(' '))
+                .collect::<Vec<_>>()
+                .join("\n")
+        );
         return Ok(());
     };
     let rest: Vec<String> = args.collect();
@@ -54,7 +62,8 @@ fn run() -> Result<()> {
         }
         "list" => {
             let all = list(&storage, layer, flags.get("label").map(String::as_str))?;
-            let rows: Vec<_> = all.iter().map(|m| json!({ "id": m.id, "created_at": m.created_at, "files": m.files.len(), "bytes": m.bytes(), "digest": m.digest })).collect();
+            let rows: Vec<_> =
+                all.iter().map(|m| json!({ "id": m.id, "created_at": m.created_at, "files": m.files.len(), "bytes": m.bytes(), "digest": m.digest })).collect();
             println!("{}", serde_json::to_string_pretty(&rows)?);
         }
         "verify" => {

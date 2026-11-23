@@ -28,9 +28,7 @@ pub fn migrate(conn: &Connection) -> Result<Vec<String>> {
         if checksum(&m.sql) != m.checksum {
             bail!("generated migration {} has a stale checksum; run `pnpm gen`", m.id);
         }
-        let existing: Option<String> = conn
-            .query_row("SELECT checksum FROM schema_migrations WHERE id = ?1", [&m.id], |r| r.get(0))
-            .ok();
+        let existing: Option<String> = conn.query_row("SELECT checksum FROM schema_migrations WHERE id = ?1", [&m.id], |r| r.get(0)).ok();
         match existing {
             Some(c) if c != m.checksum => bail!("migration {} changed after it was applied", m.id),
             Some(_) => {}

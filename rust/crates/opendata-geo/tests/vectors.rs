@@ -10,12 +10,7 @@ fn vectors() -> Value {
 #[test]
 fn classification_matches_typescript() {
     for v in vectors()["classification"].as_array().unwrap() {
-        let got = classify(
-            v["id"].as_str().unwrap(),
-            v["jurform"].as_str(),
-            v["bvForm"].as_str(),
-            v["idType"].as_str(),
-        );
+        let got = classify(v["id"].as_str().unwrap(), v["jurform"].as_str(), v["bvForm"].as_str(), v["idType"].as_str());
         assert_eq!(got.as_str(), v["expect"].as_str().unwrap(), "{v}");
     }
 }

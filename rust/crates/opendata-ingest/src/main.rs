@@ -28,7 +28,15 @@ fn main() {
 fn run() -> Result<()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     if args.first().map(String::as_str) != Some("build") {
-        println!("{}", include_str!("main.rs").lines().take_while(|l| l.starts_with("//!")).map(|l| l.trim_start_matches("//!").trim_start_matches(' ')).collect::<Vec<_>>().join("\n"));
+        println!(
+            "{}",
+            include_str!("main.rs")
+                .lines()
+                .take_while(|l| l.starts_with("//!"))
+                .map(|l| l.trim_start_matches("//!").trim_start_matches(' '))
+                .collect::<Vec<_>>()
+                .join("\n")
+        );
         return Ok(());
     }
     let mut flags = std::collections::HashMap::new();

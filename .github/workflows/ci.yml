@@ -15,6 +15,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: rust
@@ -51,5 +53,6 @@ jobs:
         with:
           workspaces: rust
       - run: cargo test --workspace --locked
+      - run: cargo fmt --check
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - run: rustup target add wasm32-unknown-unknown && cargo build -p opendata-geo --features wasm --target wasm32-unknown-unknown --release

@@ -24,13 +24,7 @@ pub fn files_of(dir: &Path) -> Result<Vec<String>> {
             if kind.is_dir() {
                 stack.push(entry.path());
             } else if kind.is_file() {
-                let rel = entry
-                    .path()
-                    .strip_prefix(dir)?
-                    .components()
-                    .map(|c| c.as_os_str().to_string_lossy().into_owned())
-                    .collect::<Vec<_>>()
-                    .join("/");
+                let rel = entry.path().strip_prefix(dir)?.components().map(|c| c.as_os_str().to_string_lossy().into_owned()).collect::<Vec<_>>().join("/");
                 validate_relative_path(&rel)?;
                 out.push(rel);
             }

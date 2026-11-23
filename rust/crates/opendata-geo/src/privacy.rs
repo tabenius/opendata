@@ -47,11 +47,7 @@ pub fn is_legal_entity_number(digits: &str) -> bool {
 
 fn normalise(id: &str) -> String {
     let digits: String = id.chars().filter(|c| !c.is_whitespace() && *c != '-').collect();
-    if digits.len() == 12 && digits.starts_with("16") && digits.bytes().all(|b| b.is_ascii_digit()) {
-        digits[2..].to_string()
-    } else {
-        digits
-    }
+    if digits.len() == 12 && digits.starts_with("16") && digits.bytes().all(|b| b.is_ascii_digit()) { digits[2..].to_string() } else { digits }
 }
 
 /// Canonical 10-digit organisationsnummer, or None if not a legal entity number.

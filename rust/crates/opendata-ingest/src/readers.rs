@@ -50,11 +50,7 @@ fn header_index(headers: &csv::StringRecord) -> HashMap<String, usize> {
 }
 
 fn field<'a>(rec: &'a csv::StringRecord, idx: &HashMap<String, usize>, names: &[&str]) -> Option<&'a str> {
-    names
-        .iter()
-        .find_map(|n| idx.get(&n.to_ascii_lowercase()).and_then(|i| rec.get(*i)))
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
+    names.iter().find_map(|n| idx.get(&n.to_ascii_lowercase()).and_then(|i| rec.get(*i))).map(str::trim).filter(|s| !s.is_empty())
 }
 
 fn opt(s: Option<&str>) -> Option<String> {
@@ -78,11 +74,7 @@ const LEGAL_FORMS: &[(&str, &str)] = &[
 
 /// Bolagsverket "Värdefulla datamängder" bulk file: ';' separated, '$' sub-fields, '|' repeats.
 pub fn bolagsverket(bytes: &[u8], source_date: &str) -> Result<Vec<Organisation>> {
-    let mut reader = csv::ReaderBuilder::new()
-        .delimiter(b';')
-        .escape(Some(b'\\'))
-        .flexible(true)
-        .from_reader(bytes);
+    let mut reader = csv::ReaderBuilder::new().delimiter(b';').escape(Some(b'\\')).flexible(true).from_reader(bytes);
     let idx = header_index(reader.headers()?);
     let mut out = Vec::new();
     for rec in reader.records() {
