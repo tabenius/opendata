@@ -61,12 +61,18 @@ export async function runCommand(
   if (command === "mail" || command === "watches") {
     const log = new MessageLog(services.objects);
     if (command === "watches" && sub === "check") {
-      if (!services.config.mailFrom) throw new Error("watches need mail.from");
+      if (!services.config.mailFrom || !services.mailer) {
+        print({ skipped: "mail is not configured" });
+        return true;
+      }
       print(await new Watches(services.sql, services.objects, { publicUrl: services.config.publicUrl, from: services.config.mailFrom }).check());
       return true;
     }
     if (sub === "deliver") {
-      if (!services.mailer) throw new Error("mail.type is none");
+      if (!services.mailer) {
+        print({ skipped: "mail is not configured" });
+        return true;
+      }
       print(await deliverOutbox(log, services.mailer, services.kv, { limit: Number(str(flags.limit) ?? 100) }));
       return true;
     }

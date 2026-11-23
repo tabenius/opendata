@@ -76,8 +76,14 @@ validates, then rbq publishes. opendata is the owner of its database, so:
 4. Reader (TS, used by the Worker importer) re-validates every key, path, size,
    chunk digest and whole-file digest. Manifests are untrusted input.
 
-Linux uses `rebsync-core::layer` directly via `rust/opendata-rbq`, rather
-than re-implementing the writer.
+Linux uses `rebsync-core::layer` (`put_chunk`, `chunk_file`,
+`SnapshotManifest`, `check_manifest`, `assemble`) via `rust/opendata-rbq`;
+only the layer allow-list and manifest key are computed locally.
+
+As built, a snapshot holds `tables/<table>.ndjson`, `meta.json` and (from the
+Rust build) `opendata.sqlite`. Workers cannot open SQLite files, so both
+runtimes import the NDJSON tables through `SqlStore`, resumably, re-applying
+the privacy guard.
 
 ## 4. KV → keys that are object keys
 
@@ -99,8 +105,8 @@ rbq's exchange is additive objects: create-if-absent, no overwrite, no delete,
 digest-verified. Messages fit that model exactly.
 
 ```text
-messages/v1/<channel>/<UTC stamp>-<sha12>.json     envelope (≤ 256 KiB)
-messages/v1/<channel>/receipts/<sha12>.json        delivery receipt
+messages/v1/<channel>/envelopes/<UTC stamp>-<sha12>.json   envelope (≤ 256 KiB)
+messages/v1/<channel>/receipts/<sha12>.json                delivery receipt
 ```
 
 - `channel` examples: `outbox`, `alerts`, `ops`. One rbq key segment each.
@@ -156,6 +162,13 @@ Options, in order of preference:
 
 Proposed: implement option 3 first (it unblocks M7 without touching rbq),
 open an issue/PR in rebsync for option 1.
+
+**Status (M7):** option 3 works today: the real `rbq repository
+append/read/list` against `/api/rbq/{id}` is tested, and so are `push`/`pull`
+of an rbq-named layer. `rust/opendata-rbq` publishes `opendata` snapshots
+with rebsync-core's own chunking and types; for rbq's own layers its output is
+accepted by rebsync-core's `layer::load`, `assemble` and `fsck`. Option 1 is
+still needed before `rbq` itself can push or pull the `opendata` layer.
 
 ## 8. Things we intentionally do not copy
 

@@ -44,7 +44,8 @@ export function createApi(services: Services, options: ApiOptions = {}) {
   const app = new Hono();
   app.use("*", cors({ origin: "*", allowMethods: ["GET", "POST", "OPTIONS"], allowHeaders: ["Content-Type", "Authorization"] }));
   app.use("*", async (c, next) => {
-    if (c.req.path === "/healthz") return next();
+    // Health checks, and rbq repositories (256-bit bearer tokens; a push is many small requests).
+    if (c.req.path === "/healthz" || c.req.path.startsWith("/api/rbq/")) return next();
     const verdict = limiter.allow(clientId(c));
     if (!verdict.ok) return c.json({ error: "rate limited" }, 429, { "Retry-After": String(verdict.retryAfter) });
     const length = Number(c.req.header("content-length") ?? 0);

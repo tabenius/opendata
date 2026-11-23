@@ -1,0 +1,74 @@
+# opendata Linux configuration. Copy to ~/.config/opendata/config.toml or pass --config.
+# Relative paths resolve against this file's directory. Secrets live in
+# owner-only files (chmod 600) referenced by *_file keys, never in this file.
+
+public_url = "https://opendata.example.se"
+listen = "127.0.0.1:8787"
+data_dir = "/var/lib/opendata"
+# pwa_dir = "/opt/opendata/apps/pwa/dist"
+
+[objects]
+type = "fs"            # "fs" (an rbq object store) or "s3" (MinIO, Garage, R2's S3 API, AWS)
+root = "objects"       # relative to data_dir
+# type = "s3"
+# endpoint = "https://ACCOUNT.r2.cloudflarestorage.com"
+# bucket = "opendata"
+# prefix = "store/"
+# access_key_id_file = "/etc/opendata/s3-key-id"
+# secret_access_key_file = "/etc/opendata/s3-secret"
+
+[sql]
+type = "sqlite"
+file = "opendata.sqlite"
+
+[kv]
+type = "sqlite"        # "sqlite", "redis" (Valkey/Redis) or "memory"
+# type = "redis"
+# url_file = "/etc/opendata/redis-url"   # redis://:password@127.0.0.1:6379/0
+# namespace = "opendata:"
+
+[mail]
+type = "none"          # "none", "log", "smtp" or "resend"
+# from = "alerts@opendata.example.se"
+# from_name = "Öppna företagsdata"
+# host = "smtp.example.se"
+# port = 587
+# user = "alerts"
+# password_file = "/etc/opendata/smtp-password"
+# api_key_file = "/etc/opendata/resend-key"
+
+[scb]
+# api_key_file = "/etc/opendata/scb-api-key"
+
+[bolagsverket]
+environment = "prod"
+# client_id = "..."
+# client_secret_file = "/etc/opendata/bolagsverket-secret"
+
+# [[px.tables]]
+# id = "TAB_ID_FROM_STATISTIKDATABASEN"
+# region_variable = "Region"
+# filters = { ContentsCode = "..." }
+
+[snapshot]
+label = "local"
+chunk_bytes = 65536
+
+[limits]
+rate_per_minute = 120
+max_depth = 8
+
+[mcp]
+# token_file = "/etc/opendata/mcp-token"
+
+[admin]
+# token_file = "/etc/opendata/admin-token"
+
+# rbq repositories served at /api/rbq/<id> (ragbaz.rbq-repository.v1).
+# `opendata rbq token` prints a fresh id and token.
+# [[rbq.repositories]]
+# id = "6f1c1d0e-5a6b-4c2d-9e8f-7a6b5c4d3e2f"
+# token_file = "/etc/opendata/rbq-token"
+# prefix = "repositories/6f1c1d0e-5a6b-4c2d-9e8f-7a6b5c4d3e2f/"
+# writable = true
+# quota_bytes = 1073741824

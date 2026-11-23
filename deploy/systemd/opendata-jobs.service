@@ -1,0 +1,19 @@
+[Unit]
+Description=opendata periodic jobs: import the newest snapshot, check watches, deliver mail
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=opendata
+Group=opendata
+WorkingDirectory=/opt/opendata
+ExecStart=/opt/opendata/apps/linux/bin/opendata.mjs snapshot import --config /etc/opendata/config.toml
+ExecStart=/opt/opendata/apps/linux/bin/opendata.mjs watches check --config /etc/opendata/config.toml
+ExecStart=/opt/opendata/apps/linux/bin/opendata.mjs mail deliver --config /etc/opendata/config.toml
+ExecStart=/opt/opendata/apps/linux/bin/opendata.mjs mail prune --days 30 --config /etc/opendata/config.toml
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/var/lib/opendata
+ReadOnlyPaths=/etc/opendata

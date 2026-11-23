@@ -1,6 +1,7 @@
 # opendata — plan
 
-Status: **plan, nothing implemented**. Date: 2026-11-23.
+Status: **M0–M7 implemented** (2026-11-23). See §16 for what was built, what
+changed from this plan, and what still needs checking against live services.
 Companion: [RBQ-COMPAT.md](RBQ-COMPAT.md) maps every storage layer here to the
 rbq (tabenius/rebsync @ `8023dcb`) contracts it must stay compatible with.
 
@@ -16,7 +17,7 @@ virtual storage layers.
 
 | Source | Content | Access | Licence |
 |---|---|---|---|
-| SCB Företagsregistret API | All companies and workplaces (arbetsställen): name, legal form, SNI, addresses, size class | Free since June 2025; certificate + password from scbforetag@scb.se; a new API version was announced for Sept 2026 | Open |
+| SCB Företagsregistret API | All companies and workplaces (arbetsställen): name, legal form, SNI, addresses, size class | Free since June 2025; API key (`X-API-Key`) from SCB; a new API version was announced for Sept 2026 | Open |
 | Bolagsverket "Värdefulla datamängder" | Basic company data, SNI 2025, digitally filed annual reports since 2020 | Free API (OAuth client from portal.api.bolagsverket.se) + weekly bulk zip | Open (HVD) |
 | Lantmäteriet belägenhetsadresser | 3.7 M location addresses with coordinates | HVD download/API after an approved purpose application | CC BY 4.0 + conditions for data containing personal data |
 | Lantmäteriet open products | Topography, place names, etc. | Account, free | CC0 |
@@ -33,11 +34,9 @@ SCB API in particular is mid-version-change.
   address only together with a name) and personal data is never released as
   open data. This project does not rebuild Ratsit/Eniro.
 - **Sole traders are people.** An *enskild näringsidkare* in Företagsregistret
-  is a natural person, often registered at home. Policy:
-  - excluded from every address/proximity/area query by default;
-  - reachable only by exact organisation number lookup;
-  - name and address fields carry a `personalData: true` flag in the schema;
-  - no bulk export of them through GraphQL or MCP.
+  is a natural person, identified by personnummer and often registered at
+  home. Policy (changed during M1, see §16): they are **dropped at ingest**
+  and never stored, exported or looked up. See doc/PRIVACY.md.
 - No credit data, no payment remarks, no income data.
 - Lantmäteriet addresses are used as **places** (geocoding, "what is near this
   point"), never joined to residents.
@@ -420,3 +419,52 @@ can't call the Rust crate. Both sides run the same conformance vectors.
 4. D1 database size limit vs. full dataset; split read-replica databases per
    table group if needed.
 5. Auth for the public API: anonymous with tight limits, or API keys only?
+
+## 16. Status after M0–M7
+
+### Built
+
+| # | Delivered | Verified by |
+|---|---|---|
+| M0 | pnpm/Turbo workspace, `ports`, `rbq` package (contract vendored with checksum), CI | every contract vector in TS |
+| M1 | memory/fs/SQLite/Redis adapters, schema, core queries, privacy guard, SCB FR connector, GraphQL, Linux CLI | conformance suites; end-to-end HTTP |
+| M2 | R2, S3, D1, Workers KV adapters, Worker entry | conformance on Miniflare (workerd) and an S3 server (moto); bundled Worker in workerd |
+| M3 | Rust `opendata-geo` (+wasm), `opendata-ingest`, `opendata-rbq`; resumable snapshot import on both runtimes | shared vectors; rebsync-core's reader/fsck accept our output; TS↔Rust interop over real files; R2→D1 import in workerd |
+| M4 | MCP server: 7 read-only tools, Streamable HTTP (stateless) and stdio | SDK client in-memory, over HTTP, in workerd, real stdio handshake |
+| M5 | Bolagsverket client (OAuth2, organisations, annual-report zips), PxWebApi v2 (JSON-stat 2.0) | fake-server tests |
+| M6 | Mailers (Resend, Workers send_email/MIME, SMTP), rbq-shaped outbox, double opt-in watches, PWA | SMTP test server; PWA screenshots in headless Chrome |
+| M7 | `/api/rbq/{id}` rbq-repository.v1 server | the real `rbq` CLI: describe, append, list, read, push, pull |
+
+### Changed from the plan
+
+- **Privacy:** natural persons are excluded at ingest instead of hidden at
+  query time. In a sample municipality about a third of workplaces belonged
+  to natural persons, identified by personnummer; storing them would have put
+  personal data into the database, snapshots and backups.
+- **Snapshots** carry `tables/*.ndjson` + `meta.json` (and `opendata.sqlite`
+  from the Rust build). Workers cannot open SQLite files, so one NDJSON import
+  path serves D1 and SQLite alike; rows carry a `snapshot` column and rows from
+  older snapshots are deleted when an import completes.
+- **Area geometry** lives in `area.geometry` (SQL), not as separate objects.
+- **Messages** use `messages/v1/<channel>/envelopes/…` and
+  `…/receipts/…` so listing envelopes never returns receipts.
+- **rbq layers:** `opendata-rbq` reuses rebsync-core's storage, chunking,
+  manifest types, validation and reassembly, and computes manifest keys for
+  `opendata`/`messages` itself. The upstream registered-layers change
+  (RBQ-COMPAT §7) is still proposed, not made.
+- **Spatial index** is a 0.01° grid (`cell`), not H3.
+- **Persisted GraphQL queries** were not added; depth (8) and field (300)
+  limits, body size cap and per-client rate limiting were.
+
+### Still to check against live services
+
+These were written from documentation and public client code, without
+credentials, and are covered by fake-server tests only:
+
+1. Bolagsverket response field paths, token URL/scope, test-environment URLs.
+2. SCB FR legal-unit fields beyond identity/jurform/name, and the
+   September 2026 API version.
+3. Lantmäteriet's actual address column names (mapping is configurable).
+4. PxWeb table ids and dimension codes for the DeSO statistics you want.
+5. Workers `send_email` behaviour for non-verified recipients.
+6. D1 size and import limits for a national dataset.
