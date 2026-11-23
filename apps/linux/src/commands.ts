@@ -1,12 +1,12 @@
 /** Commands and routes added after M1: snapshots, SCB dumps (M3), MCP (M4), mail (M6), rbq repository (M7). */
-import { mkdirSync, writeFileSync, appendFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync, appendFileSync } from "node:fs";
 import path from "node:path";
 import type { Hono } from "hono";
 import type { Repository } from "@opendata/core";
 import type { Services } from "@opendata/api";
 import { latestSnapshot, publishDatabase, syncLatest, LAYER } from "@opendata/datasets";
 import { fsckLayer, listSnapshots } from "@opendata/rbq";
-import { ScbFrClient } from "@opendata/sources";
+import { BolagsverketClient, PxClient, ScbFrClient, ingestBolagsverket, ingestPxTable } from "@opendata/sources";
 import { handleMcp } from "@opendata/mcp";
 import { serveStdio } from "@opendata/mcp/stdio";
 import { readSecretFile, type Config } from "./config";
@@ -25,7 +25,7 @@ export async function runCommand(
   flags: Record<string, string | true>,
   services: Services,
   config: Config,
-  _repo: Repository,
+  repo: Repository,
 ): Promise<boolean> {
   if (command === "snapshot") {
     const label = str(flags.label) ?? config.snapshot.label;

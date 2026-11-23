@@ -6,6 +6,8 @@
  *   opendata config explain                effective configuration (secrets redacted)
  *   opendata ingest fixture                load the fictional demo dataset
  *   opendata ingest scb --kommun 1480      SCB företagsregistret, one kommun
+ *   opendata ingest bolagsverket --orgnr A,B [--file F] [--documents]
+ *   opendata ingest px [--table ID --region-dim Region --filter "Dim=a,b;Dim2=c"]
  *   opendata dump scb --kommun 1480 --out DIR   SCB API rows as JSONL for opendata-ingest
  *   opendata snapshot publish|list|fsck|latest|import [--label L] [--budget N]
  *   opendata mcp                           MCP over stdio (for Claude Desktop / Claude Code)
