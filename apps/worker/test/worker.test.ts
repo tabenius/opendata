@@ -122,7 +122,7 @@ describe("Worker watches and mail", () => {
         body: JSON.stringify({ query: `mutation { watchArea(email: "me@example.se", kommun: "1480") { accepted message } }` }),
       });
       expect(((await res.json()) as any).data.watchArea.accepted).toBe(true);
-      const bucket = await instance.getR2Bucket("OBJECTS");
+      const bucket = (await instance.getR2Bucket("OBJECTS")) as unknown as { list(o: { prefix: string }): Promise<{ objects: unknown[] }> };
       const listed = await bucket.list({ prefix: "messages/v1/outbox/envelopes/" });
       expect(listed.objects).toHaveLength(1);
     } finally {
