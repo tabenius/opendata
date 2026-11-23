@@ -1,5 +1,6 @@
 import { createGraphQLError } from "graphql-yoga";
-import { Queries, SOURCES, type Organisation, type Workplace } from "@opendata/core";
+import { Queries, SOURCES, sniSection, SNI_SECTIONS, type Organisation, type Workplace } from "@opendata/core";
+import { Loader } from "./loader";
 import type { Services } from "./services";
 
 export interface Context {
@@ -7,7 +8,29 @@ export interface Context {
   queries: Queries;
   /** Set by the HTTP layer; used for watch rate limiting. */
   clientId: string;
+  /** Per-request batching; see `contextFor`. */
+  loaders: Loaders;
 }
+
+export interface Loaders {
+  organisation: Loader<string, Organisation>;
+  sniTitle: Loader<string, string>;
+}
+
+export function loadersFor(queries: Queries): Loaders {
+  return {
+    organisation: new Loader((ids) => queries.organisationsByIds(ids)),
+    sniTitle: new Loader((codes) => queries.sniTitles(codes)),
+  };
+}
+
+const sniFields = (code: (parent: never) => string | null) => ({
+  sniSection: (p: never) => sniSection(code(p)),
+  sniTitle: (p: never, _: unknown, c: Context) => {
+    const v = code(p);
+    return v ? c.loaders.sniTitle.load(v) : null;
+  },
+});
 
 function userError(error: unknown): never {
   if (error instanceof RangeError || error instanceof TypeError) throw createGraphQLError(error.message, { extensions: { code: "BAD_USER_INPUT" } });
@@ -51,6 +74,7 @@ export const resolvers = {
       return area && { ...area, attribution: attribution("scb-deso", "scb-px") };
     },
     sources: (_: unknown, __: unknown, c: Context) => c.queries.sourceStatus(),
+    sniSections: () => SNI_SECTIONS,
   },
   Mutation: {
     watchArea: async (_: unknown, a: { email: string; kommun?: string; deso?: string; sniPrefix?: string }, c: Context) => {
@@ -59,6 +83,7 @@ export const resolvers = {
     },
   },
   Organisation: {
+    ...sniFields((o: Organisation) => o.sniPrimary),
     workplaces: async (o: Organisation, a: { first?: number; after?: string }, c: Context) => ({
       ...(await guarded(() => c.queries.workplacesOf(o.orgnr, a.first, a.after))),
       attribution: attribution("scb-fr", "lantmateriet-adress"),
@@ -67,6 +92,7 @@ export const resolvers = {
       (await c.queries.annualReports(o.orgnr)).map((r) => ({ ...r, downloadPath: r.objectKey ? `/files/${r.objectKey}` : null })),
   },
   Workplace: {
-    organisation: (w: Workplace, _: unknown, c: Context) => c.queries.organisation(w.orgnr),
+    organisation: (w: Workplace, _: unknown, c: Context) => c.loaders.organisation.load(w.orgnr),
+    ...sniFields((w: Workplace) => w.sni),
   },
 };

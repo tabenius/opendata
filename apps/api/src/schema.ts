@@ -11,6 +11,8 @@ type Query {
   geocode(address: String!, limit: Int = 5): [GeocodeResult!]!
   area(deso: ID, point: PointInput): Area
   sources: [SourceStatus!]!
+  "SNI 2007 sections, for filter menus."
+  sniSections: [SniSection!]!
 }
 
 type Mutation {
@@ -52,6 +54,12 @@ type Source {
   url: String!
 }
 
+type SniSection {
+  "A–U"
+  letter: String!
+  title: String!
+}
+
 type Organisation {
   orgnr: ID!
   orgnrFormatted: String!
@@ -66,6 +74,10 @@ type Organisation {
   postAddress: Address!
   sniPrimary: String
   sniCodes: [String!]!
+  "SNI 2007 section (avdelning) of the primary code."
+  sniSection: SniSection
+  "Title of the primary SNI code, when the SCB code list is loaded."
+  sniTitle: String
   "The organisation has declined direct marketing (SCB reklamspärr). Respect it."
   adBlock: Boolean!
   sources: [Source!]!
@@ -85,6 +97,8 @@ type Workplace {
   name: String
   organisationName: String
   sni: String
+  sniSection: SniSection
+  sniTitle: String
   sizeClass: String
   status: String
   visitAddress: Address!

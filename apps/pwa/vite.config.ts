@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
-  server: { proxy: { "/graphql": "http://127.0.0.1:8787", "/files": "http://127.0.0.1:8787" } },
+  server: { proxy: { "/graphql": "http://127.0.0.1:8787", "/files": "http://127.0.0.1:8787", "/api": "http://127.0.0.1:8787", "/watch": "http://127.0.0.1:8787" } },
   build: { outDir: "dist", sourcemap: true },
   plugins: [
     VitePWA({

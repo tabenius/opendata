@@ -5,7 +5,8 @@ import { parseObjectKey, readStream, StorageError } from "@opendata/ports";
 import { Queries } from "@opendata/core";
 import { depthLimit, fieldLimit } from "./limits";
 import { RateLimiter } from "./ratelimit";
-import { resolvers, type Context } from "./resolvers";
+import { restApi } from "./rest";
+import { loadersFor, resolvers, type Context } from "./resolvers";
 import { typeDefs } from "./schema";
 import type { Services } from "./services";
 import { watchesFor } from "./watch";
@@ -79,7 +80,7 @@ export function createApi(services: Services, options: ApiOptions = {}) {
     landingPage: false,
     maskedErrors: true,
     plugins: [limitsPlugin],
-    context: ({ clientId }): Context => ({ services, queries, clientId }),
+    context: ({ clientId }): Context => ({ services, queries, clientId, loaders: loadersFor(queries) }),
   });
 
   const who = options.clientIdOf ?? clientId;
@@ -114,6 +115,8 @@ export function createApi(services: Services, options: ApiOptions = {}) {
     const request = await boundedRequest(c.req.raw, MAX_BODY_BYTES);
     return request instanceof Response ? request : yoga.fetch(request, { clientId: who(c) });
   });
+
+  app.route("/api/v1", restApi(queries));
 
   // Stored public documents (annual reports, area geometries). Nothing else is served.
   app.get("/files/*", async (c) => {

@@ -230,6 +230,47 @@ export class Queries {
     return { ...toOrganisation(row), workplaceCount: Number(count?.c ?? 0) };
   }
 
+  /** Several organisations in one query (batching for resolvers); unknown and personnummer ids are skipped. */
+  async organisationsByIds(ids: string[]): Promise<Map<string, Organisation>> {
+    const valid = [...new Set(ids.flatMap((id) => {
+      try {
+        return [parseOrgnr(id)];
+      } catch {
+        return [];
+      }
+    }))];
+    const out = new Map<string, Organisation>();
+    const size = Math.max(1, Math.min(90, this.sql.capabilities().maxBoundParams - 1));
+    for (let i = 0; i < valid.length; i += size) {
+      const chunk = valid.slice(i, i + size);
+      const rows = await this.sql.query<OrgRow>(`SELECT * FROM organisation WHERE orgnr IN (${chunk.map(() => "?").join(",")})`, chunk);
+      for (const row of rows) out.set(row.orgnr, toOrganisation(row));
+    }
+    return out;
+  }
+
+  /** Titles for SNI codes from the `sni` table (empty until a code list is loaded). */
+  async sniTitles(codes: string[]): Promise<Map<string, string>> {
+    const valid = [...new Set(codes.filter((c) => INPUT.sni.test(c)))];
+    const out = new Map<string, string>();
+    for (let i = 0; i < valid.length; i += 90) {
+      const chunk = valid.slice(i, i + 90);
+      for (const row of await this.sql.query<{ code: string; title: string }>(`SELECT code, title FROM sni WHERE code IN (${chunk.map(() => "?").join(",")})`, chunk)) out.set(row.code, row.title);
+    }
+    return out;
+  }
+
+  /**
+   * Changes whenever the data can have changed: a snapshot import or a
+   * finished ingest run. Used for ETags.
+   */
+  async dataVersion(): Promise<string> {
+    const row = await this.sql.first<{ snapshot: string | null; run: string | null }>(
+      "SELECT (SELECT value FROM dataset_meta WHERE key = 'active_snapshot') AS snapshot, (SELECT max(finished_at) FROM source_run) AS run",
+    );
+    return `${row?.snapshot ?? "none"}|${row?.run ?? "none"}`;
+  }
+
   async searchOrganisations(filter: OrganisationFilter, first?: number, after?: string | null): Promise<Page<Organisation>> {
     checkText("query", filter.query, 100);
     checkText("town", filter.town, 60);
