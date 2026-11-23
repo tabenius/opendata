@@ -10,6 +10,8 @@
  *   opendata ingest px [--table ID --region-dim Region --filter "Dim=a,b;Dim2=c"]
  *   opendata dump scb --kommun 1480 --out DIR   SCB API rows as JSONL for opendata-ingest
  *   opendata snapshot publish|list|fsck|latest|import [--label L] [--budget N]
+ *   opendata watches check                 queue alert mail for confirmed watches
+ *   opendata mail deliver|list|prune [--days 30]   outbox delivery (SMTP/Resend)
  *   opendata mcp                           MCP over stdio (for Claude Desktop / Claude Code)
  *
  * Global: --config PATH, --data-dir DIR, --listen HOST:PORT, --public-url URL

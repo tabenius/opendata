@@ -111,3 +111,22 @@ describe("Worker MCP endpoint", () => {
     await client.close();
   });
 });
+
+describe("Worker watches and mail", () => {
+  it("creates a watch over GraphQL and queues the confirmation in the R2 outbox", async () => {
+    const { instance } = await startWorker({ ADMIN_TOKEN: "a", RESEND_API_KEY: "re_test", MAIL_FROM: "alerts@od.example" });
+    try {
+      const res = await instance.dispatchFetch("http://worker.test/graphql", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: `mutation { watchArea(email: "me@example.se", kommun: "1480") { accepted message } }` }),
+      });
+      expect(((await res.json()) as any).data.watchArea.accepted).toBe(true);
+      const bucket = await instance.getR2Bucket("OBJECTS");
+      const listed = await bucket.list({ prefix: "messages/v1/outbox/envelopes/" });
+      expect(listed.objects).toHaveLength(1);
+    } finally {
+      await instance.dispose();
+    }
+  }, 60000);
+});

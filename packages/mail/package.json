@@ -1,0 +1,24 @@
+{
+  "name": "@opendata/mail",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./smtp": "./src/smtp.ts"
+  },
+  "dependencies": {
+    "@opendata/core": "workspace:*",
+    "@opendata/ports": "workspace:*",
+    "@opendata/rbq": "workspace:*",
+    "nodemailer": "^6.9.16"
+  },
+  "devDependencies": {
+    "@opendata/adapters-object": "workspace:*",
+    "@opendata/adapters-sql": "workspace:*",
+    "@opendata/adapters-kv": "workspace:*",
+    "@types/nodemailer": "^6.4.17",
+    "smtp-server": "^3.13.6",
+    "@types/smtp-server": "^3.5.10"
+  }
+}

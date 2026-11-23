@@ -1,7 +1,14 @@
+import { Watches } from "@opendata/mail";
 import type { Context } from "./resolvers";
+import type { Services } from "./services";
 
-/** Replaced in M6 by the outbox-backed implementation in @opendata/mail. */
-export async function createWatch(c: Context, _args: { email: string; kommun?: string; deso?: string; sniPrefix?: string }) {
-  void c;
-  return { accepted: false, message: "mail is not configured on this server" };
+export function watchesFor(services: Services): Watches | null {
+  if (!services.mailer || !services.config.mailFrom) return null;
+  return new Watches(services.sql, services.objects, { publicUrl: services.config.publicUrl, from: services.config.mailFrom });
+}
+
+export async function createWatch(c: Context, args: { email: string; kommun?: string; deso?: string; sniPrefix?: string }) {
+  const watches = watchesFor(c.services);
+  if (!watches) return { accepted: false, message: "mail is not configured on this server" };
+  return watches.create(args);
 }

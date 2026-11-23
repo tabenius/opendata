@@ -8,6 +8,7 @@ import { RateLimiter } from "./ratelimit";
 import { resolvers, type Context } from "./resolvers";
 import { typeDefs } from "./schema";
 import type { Services } from "./services";
+import { watchesFor } from "./watch";
 
 export const MAX_BODY_BYTES = 16 * 1024;
 
@@ -72,6 +73,20 @@ export function createApi(services: Services, options: ApiOptions = {}) {
       if (error instanceof StorageError && (error.kind === "NotFound" || error.kind === "InvalidKey")) return c.json({ error: "not found" }, 404);
       throw error;
     }
+  });
+
+  const page = (title: string, body: string, status = 200) =>
+    new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${title}</title><body style="font-family:system-ui;max-width:36rem;margin:3rem auto;padding:0 1rem"><h1>${title}</h1><p>${body}</p></body>`, {
+      status,
+      headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" },
+    });
+  app.get("/watch/confirm", async (c) => {
+    const ok = await watchesFor(services)?.confirm(c.req.query("token") ?? "");
+    return ok ? page("Bevakningen är aktiv", "Du får e-post när nya arbetsställen dyker upp. / Your watch is active.") : page("Ogiltig länk", "Länken är ogiltig eller redan använd. / Invalid link.", 404);
+  });
+  app.get("/watch/unsubscribe", async (c) => {
+    const ok = await watchesFor(services)?.unsubscribe(c.req.query("token") ?? "");
+    return ok ? page("Bevakningen är borttagen", "Inga fler utskick. / You are unsubscribed.") : page("Ogiltig länk", "Länken är ogiltig eller redan använd. / Invalid link.", 404);
   });
 
   options.extend?.(app);

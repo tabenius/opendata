@@ -18,7 +18,8 @@
     "@opendata/rbq": "workspace:*",
     "hono": "^4.6.0",
     "@opendata/datasets": "workspace:*",
-    "@opendata/mcp": "workspace:*"
+    "@opendata/mcp": "workspace:*",
+    "@opendata/mail": "workspace:*"
   },
   "devDependencies": {
     "miniflare": "^4.0.0",

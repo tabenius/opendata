@@ -9,9 +9,12 @@ import { readFileSync, statSync, existsSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 import { parse } from "smol-toml";
+import { fileURLToPath } from "node:url";
 
 export interface Config {
   public_url: string;
+  /** Built PWA to serve at /, if present. */
+  pwa_dir: string;
   listen: string;
   data_dir: string;
   objects: { type: "fs" | "s3"; root: string; endpoint?: string; bucket?: string; region?: string; prefix?: string; access_key_id_file?: string; secret_access_key_file?: string };
@@ -30,6 +33,7 @@ export interface Config {
 
 export const DEFAULTS: Config = {
   public_url: "http://127.0.0.1:8787",
+  pwa_dir: fileURLToPath(new URL("../../pwa/dist", import.meta.url)),
   listen: "127.0.0.1:8787",
   data_dir: path.join(process.env.XDG_DATA_HOME ?? path.join(homedir(), ".local", "share"), "opendata"),
   objects: { type: "fs", root: "objects" },
@@ -46,7 +50,7 @@ export const DEFAULTS: Config = {
   snapshot: { label: "local", chunk_bytes: 65536 },
 };
 
-const PATH_KEYS = new Set(["data_dir", "root", "file", "url_file", "password_file", "api_key_file", "client_secret_file", "access_key_id_file", "secret_access_key_file", "token_file"]);
+const PATH_KEYS = new Set(["pwa_dir", "data_dir", "root", "file", "url_file", "password_file", "api_key_file", "client_secret_file", "access_key_id_file", "secret_access_key_file", "token_file"]);
 
 type Json = Record<string, unknown>;
 

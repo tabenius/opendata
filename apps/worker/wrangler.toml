@@ -3,6 +3,11 @@ main = "src/index.ts"
 compatibility_date = "2025-09-01"
 compatibility_flags = ["nodejs_compat"]
 
+# The PWA (apps/pwa, `pnpm --filter @opendata/pwa build`). Paths without a
+# matching file fall through to the Worker (GraphQL, MCP, files, watches).
+[assets]
+directory = "../pwa/dist"
+
 # Files, snapshots, annual reports. `wrangler r2 bucket create opendata`
 [[r2_buckets]]
 binding = "OBJECTS"
@@ -25,6 +30,11 @@ MAIL_FROM = ""
 RATE_LIMIT_PER_MINUTE = "120"
 # Snapshot label the cron imports into D1 (published by the Linux ingest job).
 SNAPSHOT_LABEL = "local"
+
+# Optional: Email Routing send_email binding (delivers to verified destination
+# addresses only). Set RESEND_API_KEY instead for arbitrary recipients.
+# [[send_email]]
+# name = "EMAIL"
 
 [triggers]
 # Snapshot import check and outbox delivery.

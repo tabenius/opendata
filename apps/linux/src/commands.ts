@@ -1,5 +1,6 @@
 /** Commands and routes added after M1: snapshots, SCB dumps (M3), MCP (M4), mail (M6), rbq repository (M7). */
-import { mkdirSync, readFileSync, writeFileSync, appendFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync } from "node:fs";
+import { serveStatic } from "@hono/node-server/serve-static";
 import path from "node:path";
 import type { Hono } from "hono";
 import type { Repository } from "@opendata/core";
@@ -8,12 +9,17 @@ import { latestSnapshot, publishDatabase, syncLatest, LAYER } from "@opendata/da
 import { fsckLayer, listSnapshots } from "@opendata/rbq";
 import { BolagsverketClient, PxClient, ScbFrClient, ingestBolagsverket, ingestPxTable } from "@opendata/sources";
 import { handleMcp } from "@opendata/mcp";
+import { MessageLog, OUTBOX, Watches, deliverOutbox } from "@opendata/mail";
 import { serveStdio } from "@opendata/mcp/stdio";
 import { readSecretFile, type Config } from "./config";
 
 export function extendLinux(app: Hono, services: Services, config: Config): void {
   const token = config.mcp.token_file ? readSecretFile(config.mcp.token_file) : undefined;
   app.all("/mcp", (c) => handleMcp(c.req.raw, { sql: services.sql, objects: services.objects, token }));
+  if (existsSync(path.join(config.pwa_dir, "index.html"))) {
+    const root = path.relative(process.cwd(), config.pwa_dir) || ".";
+    app.use("/*", serveStatic({ root }));
+  }
 }
 
 const str = (v: string | true | undefined) => (typeof v === "string" ? v : undefined);
@@ -50,6 +56,28 @@ export async function runCommand(
       case "latest":
         print(await latestSnapshot(services.objects, label));
         return true;
+    }
+  }
+  if (command === "mail" || command === "watches") {
+    const log = new MessageLog(services.objects);
+    if (command === "watches" && sub === "check") {
+      if (!services.config.mailFrom) throw new Error("watches need mail.from");
+      print(await new Watches(services.sql, services.objects, { publicUrl: services.config.publicUrl, from: services.config.mailFrom }).check());
+      return true;
+    }
+    if (sub === "deliver") {
+      if (!services.mailer) throw new Error("mail.type is none");
+      print(await deliverOutbox(log, services.mailer, services.kv, { limit: Number(str(flags.limit) ?? 100) }));
+      return true;
+    }
+    if (sub === "prune") {
+      print({ removed: await log.pruneDelivered(OUTBOX, Number(str(flags.days) ?? 30)) });
+      return true;
+    }
+    if (sub === "list") {
+      const refs = await log.list(OUTBOX);
+      print(await Promise.all(refs.map(async (r) => ({ key: r.key, delivered: Boolean(await log.receipt(r)) }))));
+      return true;
     }
   }
   if (command === "mcp") {
