@@ -1,0 +1,20 @@
+{
+  "name": "@opendata/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@opendata/core": "workspace:*",
+    "@opendata/ports": "workspace:*",
+    "@opendata/rbq": "workspace:*",
+    "graphql": "^16.9.0",
+    "graphql-yoga": "^5.10.0",
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "@opendata/adapters-sql": "workspace:*",
+    "@opendata/adapters-object": "workspace:*",
+    "@opendata/adapters-kv": "workspace:*"
+  }
+}
