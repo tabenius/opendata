@@ -6,16 +6,20 @@
  * Skipped when cargo is unavailable.
  */
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { FsObjectStore } from "@opendata/adapters-object/fs";
 import { SqliteSqlStore } from "@opendata/adapters-sql/sqlite";
 import { migrate } from "@opendata/adapters-sql";
 import { FIXTURE_CENTER, Queries, fixtureDataset, migrations, wgs84ToSweref99tm } from "@opendata/core";
 import { publishDatabase, syncLatest } from "@opendata/datasets";
+
+const tempDirs: string[] = [];
+const track = (dir: string) => (tempDirs.push(dir), dir);
+afterAll(() => tempDirs.forEach((d) => rmSync(d, { recursive: true, force: true })));
 
 const rust = fileURLToPath(new URL("../../rust/", import.meta.url));
 const hasCargo = spawnSync("cargo", ["--version"]).status === 0;
@@ -62,7 +66,7 @@ describe.skipIf(!hasCargo)("Rust ingest and rbq interop", () => {
   }, 600000);
 
   it("Rust builds and publishes; TypeScript imports and queries", async () => {
-    const dir = mkdtempSync(path.join(tmpdir(), "od-interop-"));
+    const dir = track(mkdtempSync(path.join(tmpdir(), "od-interop-")));
     const d = inputs(dir);
     const out = path.join(dir, "snapshot");
     const summary = JSON.parse(
@@ -101,7 +105,7 @@ describe.skipIf(!hasCargo)("Rust ingest and rbq interop", () => {
   });
 
   it("TypeScript publishes; rebsync-core verifies and reassembles", async () => {
-    const dir = mkdtempSync(path.join(tmpdir(), "od-interop-"));
+    const dir = track(mkdtempSync(path.join(tmpdir(), "od-interop-")));
     const store = path.join(dir, "store");
     const objects = await FsObjectStore.open(store);
     const sql = new SqliteSqlStore(":memory:");

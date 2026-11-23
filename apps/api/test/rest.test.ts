@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { SqliteSqlStore } from "@opendata/adapters-sql/sqlite";
-import { migrate, type SqlStore } from "@opendata/adapters-sql";
+import { migrate } from "@opendata/adapters-sql";
+import type { SqlStore } from "@opendata/ports";
 import { MemoryObjectStore } from "@opendata/adapters-object/memory";
 import { MemoryKvStore } from "@opendata/adapters-kv";
 import { MemoryMailer } from "@opendata/mail";

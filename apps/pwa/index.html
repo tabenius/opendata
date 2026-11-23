@@ -3,17 +3,33 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#14532d" />
+    <meta name="theme-color" content="#14532d" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f1f16" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
     <meta name="description" content="Företag och arbetsställen nära en adress, ur svenska öppna myndighetsdata." />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <title>Öppna företagsdata</title>
   </head>
   <body>
+    <a class="skip" href="#results">Hoppa till resultat</a>
     <header class="bar">
       <div class="brand"><img src="/icon.svg" alt="" width="28" height="28" /><span>Öppna företagsdata</span></div>
-      <form id="search" class="search" role="search">
-        <label class="sr" for="q">Adress</label>
-        <input id="q" name="q" autocomplete="street-address" placeholder="Adress, t.ex. Kaffegatan 1, 411 60 Göteborg" required />
+      <form id="search" class="search" role="search" autocomplete="off">
+        <div class="combo">
+          <label class="sr" for="q">Adress</label>
+          <input
+            id="q"
+            name="q"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded="false"
+            aria-controls="suggestions"
+            placeholder="Adress, t.ex. Kaffegatan 1, Göteborg"
+            maxlength="200"
+          />
+          <ul id="suggestions" role="listbox" aria-label="Adressförslag" hidden></ul>
+        </div>
+        <button type="button" id="locate" class="icon" title="Använd min position" aria-label="Använd min position">◎</button>
         <label class="sr" for="radius">Radie</label>
         <select id="radius" name="radius">
           <option value="250">250 m</option>
@@ -22,33 +38,40 @@
           <option value="2500">2,5 km</option>
           <option value="5000">5 km</option>
         </select>
-        <label class="sr" for="sni">SNI</label>
-        <input id="sni" name="sni" inputmode="numeric" pattern="\d{1,5}" placeholder="SNI (valfritt)" size="9" />
+        <label class="sr" for="section">Bransch</label>
+        <select id="section" name="section">
+          <option value="">Alla branscher</option>
+        </select>
         <button type="submit">Sök</button>
       </form>
     </header>
     <main class="layout">
-      <section id="map" aria-label="Karta"></section>
-      <aside class="panel" aria-live="polite">
-        <div id="status" class="status">Sök på en adress för att se juridiska personers arbetsställen i närheten.</div>
+      <section id="map" aria-label="Karta. Högerklicka eller långtryck för att söka på en plats."></section>
+      <aside class="panel">
+        <div id="status" class="status" role="status" aria-live="polite">Sök på en adress, använd din position eller högerklicka i kartan.</div>
         <div id="area"></div>
-        <ol id="results" class="results"></ol>
+        <div class="toolbar" id="toolbar" hidden>
+          <button type="button" id="csv" class="ghost">Exportera CSV</button>
+          <button type="button" id="share" class="ghost">Kopiera länk</button>
+        </div>
+        <ol id="results" class="results" tabindex="-1" aria-label="Arbetsställen"></ol>
         <button id="more" class="more" hidden>Visa fler</button>
-        <div id="detail"></div>
+        <div id="detail" tabindex="-1"></div>
         <details class="watch">
           <summary>Bevaka området</summary>
           <form id="watch">
-            <p>Få e-post när nya arbetsställen registreras i kommunen. Du bekräftar först via e-post.</p>
+            <p>Få e-post när nya arbetsställen registreras i kommunen. Du bekräftar först via e-post; obekräftade bevakningar tas bort efter 48 timmar.</p>
             <label>E-post <input name="email" type="email" required autocomplete="email" /></label>
-            <label>Kommunkod <input name="kommun" pattern="\d{4}" required size="5" /></label>
-            <label>SNI-prefix <input name="sniPrefix" pattern="\d{1,5}" size="6" /></label>
+            <label>Kommunkod <input name="kommun" pattern="\d{4}" required size="5" inputmode="numeric" /></label>
+            <label>SNI-prefix <input name="sniPrefix" pattern="\d{1,5}" size="6" inputmode="numeric" /></label>
             <button type="submit">Bevaka</button>
-            <p id="watch-status" class="status"></p>
+            <p id="watch-status" class="status" role="status"></p>
           </form>
         </details>
         <footer class="sources">
           <p>Fysiska personer (enskilda firmor, dödsbon) visas aldrig. Respektera reklamspärr.</p>
           <p id="attribution"></p>
+          <p><a href="/api/v1/openapi.json">REST-API</a> · GraphQL på <code>/graphql</code> · MCP på <code>/mcp</code></p>
         </footer>
       </aside>
     </main>

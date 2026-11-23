@@ -1,13 +1,21 @@
 /** Tiny GraphQL client against the same origin (or VITE_API_URL). */
 const API = (import.meta.env.VITE_API_URL as string | undefined) ?? "";
 
-export async function gql<T>(query: string, variables?: Record<string, unknown>): Promise<T> {
-  const res = await fetch(`${API}/graphql`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query, variables }),
-  });
-  if (res.status === 429) throw new Error("För många förfrågningar – vänta en stund.");
+export async function gql<T>(query: string, variables?: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(`${API}/graphql`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, variables }),
+      signal,
+    });
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    throw new Error(navigator.onLine ? "Kunde inte nå servern." : "Du är offline.");
+  }
+  if (res.status === 429) throw new Error(`För många förfrågningar – försök igen om ${res.headers.get("Retry-After") ?? "en stund"} s.`);
+  if (!res.ok && !res.headers.get("content-type")?.includes("json")) throw new Error(`Serverfel (${res.status}).`);
   const body = (await res.json()) as { data?: T; errors?: { message: string }[] };
   if (body.errors?.length) throw new Error(body.errors[0]!.message);
   return body.data as T;
@@ -19,6 +27,8 @@ export interface Workplace {
   name: string | null;
   organisationName: string | null;
   sni: string | null;
+  sniTitle: string | null;
+  sniSection: { letter: string; title: string } | null;
   sizeClass: string | null;
   distanceM: number | null;
   adBlock: boolean;
@@ -32,7 +42,7 @@ export interface NearResult {
 
 export const NEAR = `query Near($address: String, $point: PointInput, $radiusM: Int, $sni: [String!], $after: String) {
   workplacesNear(address: $address, point: $point, radiusM: $radiusM, sni: $sni, first: 50, after: $after) {
-    items { cfar orgnr name organisationName sni sizeClass distanceM adBlock location { lat lon } visitAddress { street postcode town } }
+    items { cfar orgnr name organisationName sni sniTitle sniSection { letter title } sizeClass distanceM adBlock location { lat lon } visitAddress { street postcode town } }
     nextCursor totalEstimate center { lat lon } attribution
   }
 }`;
@@ -43,7 +53,7 @@ export const AREA = `query Area($point: PointInput) {
 
 export const ORG = `query Org($orgnr: ID!) {
   organisation(orgnr: $orgnr) {
-    orgnrFormatted name legalForm status registeredAt businessDescription sniPrimary adBlock
+    orgnrFormatted name legalForm status registeredAt businessDescription sniPrimary sniTitle sniSection { letter title } adBlock
     postAddress { street postcode town }
     sources { name publisher attribution }
     annualReports { periodEnd downloadPath }
@@ -71,4 +81,12 @@ export function recall<T>(key: string): T | null {
   } catch {
     return null;
   }
+}
+
+export const GEOCODE = `query Geocode($q: String!) { geocode(address: $q, limit: 6) { addressId label location { lat lon } } }`;
+export const SECTIONS = `{ sniSections { letter title } }`;
+export interface Suggestion {
+  addressId: string;
+  label: string;
+  location: { lat: number; lon: number } | null;
 }

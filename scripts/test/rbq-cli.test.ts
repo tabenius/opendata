@@ -4,7 +4,7 @@
  */
 import { execFile, execFileSync } from "node:child_process";
 import { promisify } from "node:util";
-import { chmodSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -20,6 +20,10 @@ import { FIXTURE_CENTER, Queries, Repository, fixtureDataset, migrations } from 
 import { publishDatabase, syncLatest } from "@opendata/datasets";
 import { generateToken } from "@opendata/rbq";
 
+const tempDirs: string[] = [];
+const track = (dir: string) => (tempDirs.push(dir), dir);
+afterAll(() => tempDirs.forEach((d) => rmSync(d, { recursive: true, force: true })));
+
 const RBQ = process.env.RBQ_BIN ?? "";
 const available = existsSync(RBQ);
 const rust = fileURLToPath(new URL("../../rust/", import.meta.url));
@@ -33,7 +37,7 @@ describe.skipIf(!available)("rbq CLI against /api/rbq", () => {
   let objects: FsObjectStore;
 
   beforeAll(async () => {
-    dir = mkdtempSync(path.join(tmpdir(), "od-rbq-"));
+    dir = track(mkdtempSync(path.join(tmpdir(), "od-rbq-")));
     const sql = new SqliteSqlStore(":memory:");
     await migrate(sql, migrations);
     objects = await FsObjectStore.open(path.join(dir, "server-store"));

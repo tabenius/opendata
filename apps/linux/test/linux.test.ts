@@ -1,13 +1,17 @@
-import { mkdtempSync, writeFileSync, chmodSync } from "node:fs";
+import { mkdtempSync, writeFileSync, chmodSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 import { loadConfig, readSecretFile } from "../src/config";
 import { compose } from "../src/compose";
 import { parseArgs } from "../src/cli";
 import { createApi } from "@opendata/api";
 
-const tmp = () => mkdtempSync(path.join(tmpdir(), "od-linux-"));
+const tempDirs: string[] = [];
+const track = (dir: string) => (tempDirs.push(dir), dir);
+afterAll(() => tempDirs.forEach((d) => rmSync(d, { recursive: true, force: true })));
+
+const tmp = () => track(mkdtempSync(path.join(tmpdir(), "od-linux-")));
 
 describe("linux configuration", () => {
   it("layers defaults, file and overrides; resolves paths against the file", () => {

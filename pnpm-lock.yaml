@@ -164,6 +164,9 @@ importers:
         specifier: ^5.0.0
         version: 5.24.1
     devDependencies:
+      '@opendata/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       typescript:
         specifier: ^5.6.0
         version: 5.9.3
