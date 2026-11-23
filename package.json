@@ -1,0 +1,22 @@
+{
+  "name": "opendata",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "check:contract": "cd contracts/rbq && sha256sum --check SHA256SUMS"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "tsx": "^4.23.15",
+    "turbo": "^2.11.13",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
+  }
+}

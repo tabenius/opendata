@@ -1,0 +1,1 @@
+export { objectStoreConformance } from "./object";

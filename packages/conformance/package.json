@@ -1,0 +1,11 @@
+{
+  "name": "@opendata/conformance",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@opendata/ports": "workspace:*",
+    "vitest": "^3.2.4"
+  }
+}
