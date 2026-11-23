@@ -15,7 +15,7 @@ export interface AppConfig {
   /** Sender for alert/confirmation mail. */
   mailFrom?: { email: string; name?: string };
   /** Bearer tokens accepted by /api/rbq/{id} (rbq-repository.v1), keyed by endpoint id. */
-  rbqRepositories?: Record<string, { token: string; prefix: string }>;
+  rbqRepositories?: Record<string, import("./rbq").RbqRepositoryConfig>;
   /** Shared secret for operator endpoints (ingest triggers). */
   adminToken?: string;
   /** Requests per minute per client before 429. */

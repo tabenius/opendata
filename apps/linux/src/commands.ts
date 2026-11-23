@@ -6,7 +6,7 @@ import type { Hono } from "hono";
 import type { Repository } from "@opendata/core";
 import type { Services } from "@opendata/api";
 import { latestSnapshot, publishDatabase, syncLatest, LAYER } from "@opendata/datasets";
-import { fsckLayer, listSnapshots } from "@opendata/rbq";
+import { fsckLayer, generateToken, listSnapshots } from "@opendata/rbq";
 import { BolagsverketClient, PxClient, ScbFrClient, ingestBolagsverket, ingestPxTable } from "@opendata/sources";
 import { handleMcp } from "@opendata/mcp";
 import { MessageLog, OUTBOX, Watches, deliverOutbox } from "@opendata/mail";
@@ -79,6 +79,10 @@ export async function runCommand(
       print(await Promise.all(refs.map(async (r) => ({ key: r.key, delivered: Boolean(await log.receipt(r)) }))));
       return true;
     }
+  }
+  if (command === "rbq" && sub === "token") {
+    print({ id: crypto.randomUUID(), token: generateToken(), note: "store the token in an owner-only file (chmod 600) and reference it as token_file" });
+    return true;
   }
   if (command === "mcp") {
     await serveStdio(services.sql, services.objects);

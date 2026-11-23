@@ -1,7 +1,7 @@
 /**
  * opendata — Linux CLI.
  *
- *   opendata serve                         HTTP: GraphQL, MCP, files, rbq repository
+ *   opendata serve                         HTTP: PWA, GraphQL, MCP, files, rbq repositories
  *   opendata migrate                       apply SQL migrations
  *   opendata config explain                effective configuration (secrets redacted)
  *   opendata ingest fixture                load the fictional demo dataset
@@ -12,6 +12,7 @@
  *   opendata snapshot publish|list|fsck|latest|import [--label L] [--budget N]
  *   opendata watches check                 queue alert mail for confirmed watches
  *   opendata mail deliver|list|prune [--days 30]   outbox delivery (SMTP/Resend)
+ *   opendata rbq token                     print a new rbm_ token and endpoint id for [[rbq.repositories]]
  *   opendata mcp                           MCP over stdio (for Claude Desktop / Claude Code)
  *
  * Global: --config PATH, --data-dir DIR, --listen HOST:PORT, --public-url URL

@@ -9,6 +9,7 @@ import { resolvers, type Context } from "./resolvers";
 import { typeDefs } from "./schema";
 import type { Services } from "./services";
 import { watchesFor } from "./watch";
+import { mountRbqRepositories } from "./rbq";
 
 export const MAX_BODY_BYTES = 16 * 1024;
 
@@ -88,6 +89,10 @@ export function createApi(services: Services, options: ApiOptions = {}) {
     const ok = await watchesFor(services)?.unsubscribe(c.req.query("token") ?? "");
     return ok ? page("Bevakningen är borttagen", "Inga fler utskick. / You are unsubscribed.") : page("Ogiltig länk", "Länken är ogiltig eller redan använd. / Invalid link.", 404);
   });
+
+  if (services.config.rbqRepositories && Object.keys(services.config.rbqRepositories).length) {
+    mountRbqRepositories(app, { objects: services.objects, sql: services.sql, publicUrl: services.config.publicUrl, repositories: services.config.rbqRepositories });
+  }
 
   options.extend?.(app);
   app.notFound((c) => c.json({ error: "not found" }, 404));

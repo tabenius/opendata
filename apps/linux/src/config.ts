@@ -24,7 +24,7 @@ export interface Config {
   scb: { api_key_file?: string };
   bolagsverket: { environment: "prod" | "test"; client_id?: string; client_secret_file?: string };
   px: { tables: { id: string; region_variable?: string; filters?: Record<string, string> }[] };
-  rbq: { repositories: { id: string; token_file: string; prefix: string }[] };
+  rbq: { repositories: { id: string; token_file: string; prefix?: string; writable?: boolean; quota_bytes?: number }[] };
   admin: { token_file?: string };
   mcp: { token_file?: string };
   limits: { rate_per_minute: number; max_depth: number };

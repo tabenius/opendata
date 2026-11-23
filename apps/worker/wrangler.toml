@@ -41,4 +41,4 @@ SNAPSHOT_LABEL = "local"
 crons = ["*/15 * * * *"]
 
 # Secrets (wrangler secret put NAME): ADMIN_TOKEN, MCP_TOKEN (optional), RESEND_API_KEY,
-# RBQ_REPOSITORIES (JSON: {"<uuid>": {"token": "rbm_...", "prefix": ""}}).
+# RBQ_REPOSITORIES (JSON: {"<uuid>": {"token": "rbm_...", "prefix": "repositories/<uuid>/", "quotaBytes": 1073741824}}).

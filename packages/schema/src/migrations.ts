@@ -179,4 +179,17 @@ ALTER TABLE sni ADD COLUMN snapshot TEXT;
 CREATE INDEX area_bbox ON area(min_lat, max_lat);
 `,
   },
+  {
+    id: "0003_rbq_repository",
+    sql: `
+CREATE TABLE rbq_object (
+  repository TEXT NOT NULL,
+  key TEXT NOT NULL,
+  sha256 TEXT NOT NULL,
+  size_bytes INTEGER NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (repository, key)
+);
+`,
+  },
 ];

@@ -25,6 +25,10 @@
     "@opendata/adapters-sql": "workspace:*",
     "@opendata/core": "workspace:*",
     "@opendata/datasets": "workspace:*",
-    "@opendata/schema": "workspace:*"
+    "@opendata/schema": "workspace:*",
+    "@opendata/api": "workspace:*",
+    "@opendata/adapters-kv": "workspace:*",
+    "@hono/node-server": "^1.13.0",
+    "@opendata/rbq": "workspace:*"
   }
 }

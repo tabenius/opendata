@@ -47,7 +47,9 @@ export async function compose(config: Config): Promise<Services & { sql: SqliteS
   await migrate(sql, migrations);
   const objects = await openObjects(config);
   const kv = await openKv(config, sql);
-  const rbqRepositories = Object.fromEntries(config.rbq.repositories.map((r) => [r.id, { token: readSecretFile(r.token_file), prefix: r.prefix }]));
+  const rbqRepositories = Object.fromEntries(
+    config.rbq.repositories.map((r) => [r.id, { token: readSecretFile(r.token_file), prefix: r.prefix ?? `repositories/${r.id}/`, writable: r.writable, quotaBytes: r.quota_bytes }]),
+  );
   return {
     sql,
     objects,
